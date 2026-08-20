@@ -11,9 +11,7 @@ import { INTRO_DONE_EVENT } from "./reveal";
 //   3. Molten material floods in from the gate at the left and FILLS the
 //      letterforms — rippling melt front, heat glow, rising embers
 //   4. It COOLS: furnace orange -> solid white; the tagline settles in
-//   5. The mould OPENS: clamp jolt, then the platens part — and the wordmark
-//      SPLITS WITH THEM, sliced mid-letter, each half riding its platen away
-//      as the page rises out of the mould.
+//   5. The black gracefully fades away — the page rises up beneath it.
 //
 // Rules: once per session (only a finished run counts), tap to skip,
 // reduced-motion skips entirely, overlays the already-rendered page.
@@ -27,15 +25,13 @@ const T_CAVITY = 0.1;  const D_CAVITY = 0.4;
 const T_FILL   = 0.55; const D_FILL   = 1.75;
 const T_COOL   = 2.45; const D_COOL   = 0.65;
 const T_TAG    = 2.7;
-const T_REL    = 3.6;                          // clamp release jolt
-const T_SPLIT  = 3.75; const D_SPLIT  = 1.2;
-const HERO_EVENT_MS = 4000;
-const SPLIT_MS = 3750;
+const T_EXIT_MS = 3600;                        // black fades away, gracefully
+const D_EXIT   = 1.1;
+const HERO_EVENT_MS = 3700;                    // hero rises inside the fade
+const SPLIT_MS = 3600;                         // when the SHOT counter ticks
 
 const SEEN_KEY = "industrial-sync-intro-seen";
 const subscribeNever = () => () => {};
-const PLATEN_EASE = [0.83, 0, 0.17, 1] as const;
-
 const CHROME = [
   { pos: "top-6 left-8", text: "INDUSTRIAL-SYNC // CYCLE 04711" },
   { pos: "top-6 right-8", text: "CLAMP 1250 kN" },
@@ -92,7 +88,7 @@ export function Intro() {
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState<"typing" | "mould" | "done">("typing");
   const [typed, setTyped] = useState("");
-  const [split, setSplit] = useState(false);
+  const [exit, setExit] = useState(false);
   const skipped = useRef(false);
 
   const seen = useSyncExternalStore(
@@ -119,10 +115,10 @@ export function Intro() {
     return () => clearTimeout(t);
   }, [show, phase, typed]);
 
-  // Act 2 keyed moments: the split swap and the hero rising.
+  // Act 2 keyed moments: the exit fade and the hero rising.
   useEffect(() => {
     if (phase !== "mould") return;
-    const a = setTimeout(() => setSplit(true), SPLIT_MS);
+    const a = setTimeout(() => setExit(true), T_EXIT_MS);
     const b = setTimeout(() => window.dispatchEvent(new Event(INTRO_DONE_EVENT)), HERO_EVENT_MS);
     return () => { clearTimeout(a); clearTimeout(b); };
   }, [phase]);
@@ -141,40 +137,18 @@ export function Intro() {
     <AnimatePresence>
       <motion.div
         key="intro"
-        className={`fixed inset-0 z-50 cursor-pointer select-none ${split ? "bg-transparent pointer-events-none" : "bg-black"}`}
+        className={`fixed inset-0 z-50 cursor-pointer select-none bg-black ${exit ? "pointer-events-none" : ""}`}
         onClick={skip}
+        animate={exit ? { opacity: 0 } : { opacity: 1 }}
+        transition={{ duration: D_EXIT, ease: [0.4, 0, 0.2, 1] }}
+        onAnimationComplete={() => exit && finish()}
         aria-label="Skip intro"
         role="button"
       >
-        {/* Focus pull on the page as the part is released. */}
-        {mould && (
-          <motion.div
-            className="absolute inset-0"
-            initial={{ backdropFilter: "blur(9px)" }}
-            animate={{ backdropFilter: "blur(0px)" }}
-            transition={{ duration: D_SPLIT, delay: T_SPLIT, ease: "easeOut" }}
-          />
-        )}
-
-        {/* Platens: black halves, each carrying its slice of the finished
-            wordmark. Clamp-jolt 3px, then part — the name splits mid-letter. */}
-        <motion.div
-          className="absolute inset-x-0 top-0 h-1/2 bg-black"
-          animate={mould ? { y: [0, 3, 3, "-100%"] } : { y: 0 }}
-          transition={mould ? { duration: T_SPLIT - T_REL + D_SPLIT, delay: T_REL, times: [0, 0.09, 0.12, 1], ease: ["easeOut", "linear", PLATEN_EASE] } : undefined}
-          onAnimationComplete={() => mould && finish()}
-        />
-        <motion.div
-          className="absolute inset-x-0 bottom-0 h-1/2 bg-black"
-          animate={mould ? { y: [0, -3, -3, "100%"] } : { y: 0 }}
-          transition={mould ? { duration: T_SPLIT - T_REL + D_SPLIT, delay: T_REL, times: [0, 0.09, 0.12, 1], ease: ["easeOut", "linear", PLATEN_EASE] } : undefined}
-        />
-
-        {/* The main stage — hidden the instant the platens take over. */}
+        {/* The main stage. */}
         <motion.div
           className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8"
-          animate={split ? { opacity: 0 } : { opacity: 1 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
+          animate={{ opacity: 1 }}
         >
           <div className="text-2xl md:text-3xl text-white/60" style={{ minHeight: "1em" }}>
             {typed}
@@ -286,7 +260,7 @@ export function Intro() {
         </motion.div>
 
         {/* Quiet machine chrome. */}
-        <motion.div animate={split ? { opacity: 0 } : { opacity: 1 }} transition={{ duration: 0.25 }}>
+        <motion.div animate={{ opacity: 1 }}>
           {CHROME.map((c) => (
             <motion.span
               key={c.text}
