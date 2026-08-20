@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { INTRO_DONE_EVENT } from "./reveal";
 
 // The Shotline welcome: black screen, three typed lines with a terminal
 // cursor, then a WATER WAVE — drawn on canvas, real randomness, foam and
@@ -185,6 +186,9 @@ export function Intro() {
   // at mount made the first re-render read "seen" and unmount the overlay.
   const finish = () => {
     sessionStorage.setItem(SEEN_KEY, "1");
+    // Tell the page beneath to begin its entrance — the overlay fades out
+    // while the hero rises, so the reveal overlaps instead of popping.
+    window.dispatchEvent(new Event(INTRO_DONE_EVENT));
     setPhase("done");
   };
 
@@ -222,7 +226,7 @@ export function Intro() {
         key="intro"
         className="fixed inset-0 z-50 bg-black flex items-center justify-center cursor-pointer select-none"
         onClick={skip}
-        exit={{ opacity: 0 }}
+        exit={{ opacity: 0, transition: { duration: 0.6 } }}
         aria-label="Skip intro"
         role="button"
       >
