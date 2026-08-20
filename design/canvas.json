@@ -1,0 +1,12 @@
+{
+  "artboards": [
+    { "file": "Homepage.dc.html", "x": 0, "y": 0, "w": 1440, "h": 2400, "title": "Homepage" },
+    { "file": "Main.dc.html", "x": 1560, "y": 0, "w": 1280, "h": 1300, "title": "Dashboard" }
+  ],
+  "annotations": [
+    { "id": "note-homepage", "x": 0, "y": -170, "w": 420, "text": "HOMEPAGE — one CTA repeated, no pricing, no signup. This page has one job: make a factory owner pick up the phone. Sales-led, tech visits the factory." },
+    { "id": "note-dashboard", "x": 1560, "y": -170, "w": 460, "text": "DASHBOARD — the manager's morning: floor starting up, machines coming online one by one. MAKE NEXT is the day's first decision. Big numbers readable from a metre; every touch target 44px+." },
+    { "id": "note-accent", "x": 2900, "y": -170, "w": 300, "text": "Try the Brand accent tweak (chip above each artboard) — amber is the working pick; green/blue/red are there to compare." }
+  ],
+  "launch": { "view": "canvas" }
+}

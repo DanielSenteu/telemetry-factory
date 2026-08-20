@@ -1,0 +1,18 @@
+{
+  "cloudUrl": "",
+  "agentToken": "",
+  "statusPollSec": 30,
+  "machines": [
+    { "name": "SIM-IMM-1", "endpoint": "opc.tcp://127.0.0.1:26543" },
+    { "name": "SIM-IMM-2", "endpoint": "opc.tcp://127.0.0.1:26544" }
+  ],
+  "modbusDevices": [
+    {
+      "name": "CV-350",
+      "host": "192.168.1.200",
+      "port": 502,
+      "unitId": 1,
+      "machineKey": "CV350-WAVESHARE-001"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+# contains the org's agent token — copy config.example.json instead
+config.json
+
+# disk buffer of readings awaiting cloud delivery
+queue/

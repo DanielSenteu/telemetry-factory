@@ -1,0 +1,3 @@
+-- Placeholder: this migration was applied directly to the remote database.
+-- Content unknown; schema changes from it remain in prod.
+-- Marked as reverted in migration history so local migrations can be pushed.

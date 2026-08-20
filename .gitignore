@@ -1,0 +1,16 @@
+node_modules/
+.next/
+.env
+.env.local
+.env*.local
+
+# Supabase
+supabase/.temp/
+supabase/.branches/
+supabase/functions/.env
+
+# Factory agent — config carries the org's token; queue is runtime state
+apps/factory-agent/config.json
+apps/factory-agent/queue/
+
+.DS_Store

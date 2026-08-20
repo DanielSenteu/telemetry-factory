@@ -1,0 +1,221 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body { margin: 0; font-family: system-ui, -apple-system, sans-serif; background: #14161a; }
+    a { color: #f5b62e; } a:hover { color: #ffd066; }
+    @keyframes ledpulse { 0% { box-shadow: 0 0 0 0 rgba(76,195,138,.55); } 70% { box-shadow: 0 0 0 9px rgba(76,195,138,0); } 100% { box-shadow: 0 0 0 0 rgba(76,195,138,0); } }
+    @keyframes ledalarm { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+    .num { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+    .cond { font-family: "Avenir Next Condensed", "Arial Narrow", "Helvetica Neue", sans-serif; }
+  </style>
+</helmet>
+<div style="width: 1280px; min-height: 1300px; background: #14161a; color: #e8e6e1; display: flex; flex-direction: column">
+
+  <div style="display: flex; align-items: center; gap: 24px; padding: 14px 24px; border-bottom: 1px solid #2a2e35">
+    <div class="cond" style="font-size: 19px; font-weight: 700; letter-spacing: 2px; color: #e8e6e1">TELEMETRY <span style="color: {{accent}}">FACTORY</span></div>
+    <div style="display: flex; gap: 6px; margin-left: 8px">
+      <div style="padding: 12px 22px; font-size: 16px; font-weight: 600; color: #14161a; background: {{accent}}; border-radius: 10px; min-height: 24px">Dashboard</div>
+      <div style="padding: 12px 22px; font-size: 16px; font-weight: 600; color: #9a978f; border-radius: 10px">Materials</div>
+      <div style="padding: 12px 22px; font-size: 16px; font-weight: 600; color: #9a978f; border-radius: 10px">Production</div>
+      <div style="padding: 12px 22px; font-size: 16px; font-weight: 600; color: #9a978f; border-radius: 10px">Sales</div>
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 14px">
+      <div style="font-size: 15px; color: #9a978f">Alpha Surgicals</div>
+      <div class="num" style="font-size: 15px; color: #e8e6e1">Wed 09:14</div>
+      <div style="width: 40px; height: 40px; border-radius: 50%; background: #2a2e35; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 700; color: #9a978f">D</div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 10px; padding: 10px 24px; font-size: 14px; color: #9a978f; border-bottom: 1px solid #1c1f24">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#4cc38a" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+    <span>Floor started <span class="num" style="color: #e8e6e1">07:42</span></span>
+    <span style="color: #2a2e35">|</span>
+    <span><span class="num" style="color: #e8e6e1">3 of 4</span> machines up</span>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 20px 24px">
+
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 0 0 1px rgba(76,195,138,.35)">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #4cc38a; animation: ledpulse 1.6s infinite"></span>
+        <span class="cond" style="font-size: 17px; font-weight: 700; letter-spacing: 1px">IMM-1</span>
+        <span style="margin-left: auto; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #4cc38a">RUNNING</span>
+      </div>
+      <div style="font-size: 15px; color: #e8e6e1; font-weight: 600">Urine container 45ml</div>
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span class="num" style="font-size: 46px; font-weight: 700; color: #e8e6e1; line-height: 1">1,240</span>
+        <span style="font-size: 14px; color: #9a978f">today</span>
+      </div>
+      <div style="display: flex; gap: 8px; font-size: 13px; color: #9a978f">
+        <span class="num" style="background: #14161a; border-radius: 7px; padding: 5px 10px">18.2s cycle</span>
+        <span class="num" style="background: #14161a; border-radius: 7px; padding: 5px 10px">0 scrap</span>
+      </div>
+    </div>
+
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 0 0 1px rgba(76,195,138,.35)">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #4cc38a; animation: ledpulse 1.6s infinite"></span>
+        <span class="cond" style="font-size: 17px; font-weight: 700; letter-spacing: 1px">IMM-2</span>
+        <span style="margin-left: auto; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #4cc38a">RUNNING</span>
+      </div>
+      <div style="font-size: 15px; color: #e8e6e1; font-weight: 600">Stool container 45ml</div>
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span class="num" style="font-size: 46px; font-weight: 700; color: #e8e6e1; line-height: 1">880</span>
+        <span style="font-size: 14px; color: #9a978f">today</span>
+      </div>
+      <div style="display: flex; gap: 8px; font-size: 13px; color: #9a978f">
+        <span class="num" style="background: #14161a; border-radius: 7px; padding: 5px 10px">21.0s cycle</span>
+        <span class="num" style="background: #14161a; border-radius: 7px; padding: 5px 10px">4 scrap</span>
+      </div>
+    </div>
+
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px; opacity: .82; box-shadow: 0 0 0 1px rgba(240,194,121,.3)">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #f0c279"></span>
+        <span class="cond" style="font-size: 17px; font-weight: 700; letter-spacing: 1px">IMM-3</span>
+        <span style="margin-left: auto; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #f0c279">IDLE</span>
+      </div>
+      <div style="font-size: 15px; color: #9a978f; font-weight: 600">No job running</div>
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span class="num" style="font-size: 46px; font-weight: 700; color: #6c7078; line-height: 1">0</span>
+        <span style="font-size: 14px; color: #9a978f">today</span>
+      </div>
+      <div style="font-size: 14px; color: {{accent}}; font-weight: 600; padding: 5px 0">Tap to assign a product</div>
+    </div>
+
+    <div style="background: #1c1f24; border: 1px solid #e5484d; border-radius: 14px; padding: 18px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 10px">
+        <span style="width: 12px; height: 12px; border-radius: 50%; background: #e5484d; animation: ledalarm .8s infinite"></span>
+        <span class="cond" style="font-size: 17px; font-weight: 700; letter-spacing: 1px">CV-350</span>
+        <span style="margin-left: auto; font-size: 12px; font-weight: 700; letter-spacing: 1px; color: #e5484d">ALARM</span>
+      </div>
+      <div style="font-size: 15px; color: #e8e6e1; font-weight: 600">Sealing line</div>
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span class="num" style="font-size: 46px; font-weight: 700; color: #e8e6e1; line-height: 1">310</span>
+        <span style="font-size: 14px; color: #9a978f">today</span>
+      </div>
+      <div style="display: flex; gap: 8px; align-items: center">
+        <span class="num" style="font-size: 13px; background: rgba(229,72,77,.15); color: #e5484d; border-radius: 7px; padding: 5px 10px; font-weight: 700">E-04 · Heater zone 3</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 0 24px">
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 4px">
+      <div class="cond" style="font-size: 15px; font-weight: 700; letter-spacing: 1.5px; color: #9a978f; padding-bottom: 8px">RAW MATERIALS</div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #24272d; min-height: 44px">
+        <span style="font-size: 16px; font-weight: 600; flex-grow: 1">Polypropylene</span>
+        <span class="num" style="font-size: 20px; font-weight: 700">30.0 kg</span>
+        <span style="font-size: 13px; color: #9a978f; width: 110px; text-align: right">≈ 2.1 days left</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #24272d; min-height: 44px">
+        <span style="font-size: 16px; font-weight: 600; flex-grow: 1">Colourant — blue</span>
+        <span class="num" style="font-size: 20px; font-weight: 700">1.2 kg</span>
+        <span style="font-size: 13px; color: #9a978f; width: 110px; text-align: right">≈ 9 days left</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #24272d; min-height: 44px">
+        <span style="font-size: 16px; font-weight: 600; flex-grow: 1; color: #4cc38a">Regrind pool</span>
+        <span class="num" style="font-size: 20px; font-weight: 700; color: #4cc38a">2.5 kg</span>
+        <span style="font-size: 13px; color: #9a978f; width: 110px; text-align: right">from runners</span>
+      </div>
+    </div>
+
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 4px">
+      <div class="cond" style="font-size: 15px; font-weight: 700; letter-spacing: 1.5px; color: #9a978f; padding-bottom: 8px">FINISHED GOODS</div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #24272d; min-height: 44px">
+        <span style="font-size: 16px; font-weight: 600; flex-grow: 1">Urine containers</span>
+        <span class="num" style="font-size: 20px; font-weight: 700">3,800</span>
+        <span class="num" style="font-size: 13px; font-weight: 700; background: rgba(229,72,77,.15); color: #e5484d; border-radius: 7px; padding: 6px 12px; width: 96px; text-align: center">0.2 wk</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #24272d; min-height: 44px">
+        <span style="font-size: 16px; font-weight: 600; flex-grow: 1">Stool containers</span>
+        <span class="num" style="font-size: 20px; font-weight: 700">0</span>
+        <span class="num" style="font-size: 13px; font-weight: 700; background: rgba(229,72,77,.25); color: #ff7b7f; border-radius: 7px; padding: 6px 12px; width: 96px; text-align: center">OUT</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #24272d; min-height: 44px">
+        <span style="font-size: 16px; font-weight: 600; flex-grow: 1">Polypot</span>
+        <span class="num" style="font-size: 20px; font-weight: 700">9,400</span>
+        <span class="num" style="font-size: 13px; font-weight: 700; background: rgba(76,195,138,.15); color: #4cc38a; border-radius: 7px; padding: 6px 12px; width: 96px; text-align: center">6 wk</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 0">
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <div class="cond" style="font-size: 15px; font-weight: 700; letter-spacing: 1.5px; color: {{accent}}">MAKE NEXT</div>
+        <div style="font-size: 13px; color: #9a978f">based on what is selling and what is on the shelf</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: #14161a; border-radius: 10px; min-height: 48px">
+        <span style="font-size: 16px; font-weight: 700; width: 190px">Stool containers</span>
+        <span class="num" style="font-size: 16px; width: 130px">make 12,000</span>
+        <span class="num" style="font-size: 14px; color: #9a978f; width: 90px">IMM-2</span>
+        <span class="num" style="font-size: 14px; color: #9a978f; width: 70px">8.4 h</span>
+        <span class="num" style="font-size: 14px; color: #9a978f; width: 90px">48 kg PP</span>
+        <span class="num" style="font-size: 13px; font-weight: 700; background: rgba(76,195,138,.15); color: #4cc38a; border-radius: 7px; padding: 6px 12px; margin-left: auto">material OK</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 16px; padding: 14px 16px; background: #14161a; border-radius: 10px; min-height: 48px">
+        <span style="font-size: 16px; font-weight: 700; width: 190px">Urine containers</span>
+        <span class="num" style="font-size: 16px; width: 130px">make 20,000</span>
+        <span class="num" style="font-size: 14px; color: #9a978f; width: 90px">IMM-1</span>
+        <span class="num" style="font-size: 14px; color: #9a978f; width: 70px">11.2 h</span>
+        <span class="num" style="font-size: 14px; color: #9a978f; width: 90px">80 kg PP</span>
+        <span class="num" style="font-size: 13px; font-weight: 700; background: rgba(240,194,121,.15); color: #f0c279; border-radius: 7px; padding: 6px 12px; margin-left: auto">short 50 kg — order PP</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="padding: 16px 24px 24px">
+    <div style="background: #1c1f24; border: 1px solid #2a2e35; border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 2px">
+      <div class="cond" style="font-size: 15px; font-weight: 700; letter-spacing: 1.5px; color: #9a978f; padding-bottom: 8px">HAPPENING NOW</div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid #24272d">
+        <span class="num" style="font-size: 13px; color: #6c7078; width: 48px">09:12</span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #4cc38a"></span>
+        <span style="font-size: 15px"><span class="num" style="font-weight: 700; color: #4cc38a">+240</span> Urine containers made — IMM-1</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid #24272d">
+        <span class="num" style="font-size: 13px; color: #6c7078; width: 48px">09:12</span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #6c7078"></span>
+        <span style="font-size: 15px; color: #cfccc4"><span class="num" style="font-weight: 700">−960 g</span> Polypropylene used — IMM-1 recipe</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid #24272d">
+        <span class="num" style="font-size: 13px; color: #6c7078; width: 48px">08:40</span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #5eb1ef"></span>
+        <span style="font-size: 15px"><span class="num" style="font-weight: 700; color: #5eb1ef">−500</span> Urine containers sold — invoice INV024285</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid #24272d">
+        <span class="num" style="font-size: 13px; color: #6c7078; width: 48px">08:15</span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #e5484d"></span>
+        <span style="font-size: 15px; color: #ff9b9e">Alarm E-04 on CV-350 — heater zone 3</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid #24272d">
+        <span class="num" style="font-size: 13px; color: #6c7078; width: 48px">07:15</span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #4cc38a"></span>
+        <span style="font-size: 15px"><span class="num" style="font-weight: 700; color: #4cc38a">+50.0 kg</span> Polypropylene received — supplier invoice PSL-4471</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 14px; padding: 10px 0; border-top: 1px solid #24272d">
+        <span class="num" style="font-size: 13px; color: #6c7078; width: 48px">07:42</span>
+        <span style="width: 9px; height: 9px; border-radius: 50%; background: #f0c279"></span>
+        <span style="font-size: 15px; color: #cfccc4">Floor started — IMM-1 first cycle of the day</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script data-dc-script data-props='{"accent":{"editor":"color","default":"#f5b62e","options":["#f5b62e","#4cc38a","#5eb1ef","#e5484d"],"section":"Brand"},"$preview":{"width":1280,"height":1300}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return { accent: this.props.accent ?? '#f5b62e' };
+  }
+}
+</script>
+</body>
+</html>

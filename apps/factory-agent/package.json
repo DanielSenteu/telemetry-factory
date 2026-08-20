@@ -1,0 +1,25 @@
+{
+  "name": "@shotline/factory-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "On-prem collector: subscribes to tmSCADA OPC UA machine gateways and ships readings to the cloud. Also ships a simulator for development.",
+  "scripts": {
+    "agent": "tsx src/agent/main.ts",
+    "cv350": "tsx src/collector-cv350/main.ts",
+    "simulator": "tsx src/simulator/main.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "modbus-serial": "^8.0.25",
+    "node-opcua": "^2.154.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "tsx": "^4.20.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.7"
+  }
+}

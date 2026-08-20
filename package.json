@@ -1,0 +1,17 @@
+{
+  "name": "shotline",
+  "private": true,
+  "packageManager": "pnpm@10.11.1",
+  "scripts": {
+    "dev": "pnpm --filter @shotline/web dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:db": "supabase test db",
+    "db:reset": "supabase db reset",
+    "db:push": "supabase db push",
+    "agent": "pnpm --filter @shotline/factory-agent agent",
+    "simulator": "pnpm --filter @shotline/factory-agent simulator"
+  }
+}
