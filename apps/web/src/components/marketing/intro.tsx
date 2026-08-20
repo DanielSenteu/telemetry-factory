@@ -40,9 +40,13 @@ export function Intro() {
     () => true,
   );
   const show = !seen && !reduced;
-  useEffect(() => {
-    if (show) sessionStorage.setItem(SEEN_KEY, "1");
-  }, [show]);
+  // Marked seen only when the intro actually FINISHES (skip or wave complete).
+  // Marking at mount was a bug: the first re-render re-read storage, saw
+  // "seen", and unmounted the overlay one frame in — the intro killed itself.
+  const finish = () => {
+    sessionStorage.setItem(SEEN_KEY, "1");
+    setPhase("done");
+  };
 
   // The typewriter.
   useEffect(() => {
@@ -66,7 +70,7 @@ export function Intro() {
   const skip = () => {
     if (skipped.current) return;
     skipped.current = true;
-    setPhase("done");
+    finish();
   };
 
   if (!show || phase === "done") return null;
@@ -104,7 +108,7 @@ export function Intro() {
             initial={{ x: "-160vw" }}
             animate={{ x: "0vw" }}
             transition={{ duration: 0.8, ease: [0.7, 0, 0.3, 1] }}
-            onAnimationComplete={() => setPhase("done")}
+            onAnimationComplete={finish}
           />
         )}
 

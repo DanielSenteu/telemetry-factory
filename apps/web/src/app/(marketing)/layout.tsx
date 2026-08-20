@@ -24,8 +24,8 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
             ))}
           </nav>
           <div className="ml-auto flex items-center gap-3">
-            <Button variant="ghost" render={<Link href="/login" />}>Log in</Button>
-            <Button className="bg-[var(--ink)] hover:bg-black" render={<Link href="/contact" />}>Book a factory visit</Button>
+            <Button variant="ghost" nativeButton={false} render={<Link href="/login" />}>Log in</Button>
+            <Button className="bg-[var(--ink)] hover:bg-black" nativeButton={false} render={<Link href="/contact" />}>Book a factory visit</Button>
           </div>
         </div>
       </header>
