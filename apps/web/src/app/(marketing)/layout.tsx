@@ -14,7 +14,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center gap-8">
           <Link href="/" className="font-display text-lg font-bold tracking-tight flex items-center gap-2">
             <span className="inline-block size-2.5 rounded-full bg-[var(--accent)]" aria-hidden />
-            Shotline
+            Industrial Sync
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm text-black/60">
             {nav.map((n) => (
@@ -32,7 +32,7 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
       <main className="flex-1">{children}</main>
       <footer className="border-t border-black/5">
         <div className="mx-auto max-w-6xl px-6 py-10 flex flex-wrap items-center gap-6 text-sm text-black/50">
-          <span className="font-display font-bold text-black/70">Shotline</span>
+          <span className="font-display font-bold text-black/70">Industrial Sync</span>
           <span>A Telemetry company · Nairobi, Kenya</span>
           <span className="ml-auto font-mono">[YOUR PHONE] · [YOUR EMAIL]</span>
         </div>

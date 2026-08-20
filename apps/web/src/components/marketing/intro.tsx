@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import { INTRO_DONE_EVENT } from "./reveal";
 
-// The Shotline welcome: black screen, three typed lines with a terminal
+// The Industrial Sync welcome: black screen, three typed lines with a terminal
 // cursor, then a WATER WAVE — drawn on canvas, real randomness, foam and
 // spray — sweeps across and the homepage is simply there.
 //
@@ -16,13 +16,13 @@ import { INTRO_DONE_EVENT } from "./reveal";
 
 const LINES = [
   { text: "Welcome to", cls: "text-2xl md:text-3xl text-white/60" },
-  { text: "Shotline", cls: "font-display text-6xl md:text-8xl font-bold tracking-tight text-white" },
+  { text: "Industrial Sync", cls: "font-display text-6xl md:text-8xl font-bold tracking-tight text-white" },
   { text: "Your all-in-one manufacturing solution", cls: "text-xl md:text-2xl text-white/70" },
 ];
 const TYPE_MS = 82;
 const LINE_PAUSE_MS = 620;
 const HOLD_MS = 2000;
-const SEEN_KEY = "shotline-intro-seen";
+const SEEN_KEY = "industrial-sync-intro-seen";
 const subscribeNever = () => () => {};
 
 // ── The wave ──────────────────────────────────────────

@@ -1,5 +1,5 @@
 {
-  "name": "@shotline/shared",
+  "name": "@industrial-sync/shared",
   "version": "1.0.0",
   "private": true,
   "type": "module",

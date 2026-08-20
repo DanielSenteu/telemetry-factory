@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { motion, useReducedMotion } from "motion/react";
 
-export const INTRO_DONE_EVENT = "shotline:intro-done";
-const SEEN_KEY = "shotline-intro-seen";
+export const INTRO_DONE_EVENT = "industrial-sync:intro-done";
+const SEEN_KEY = "industrial-sync-intro-seen";
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 // Above-the-fold reveal: waits for the intro to finish (or fires immediately

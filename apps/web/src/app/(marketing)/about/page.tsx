@@ -2,10 +2,10 @@ export default function AboutPage() {
   return (
     <>
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-16">
-        <h1 className="font-display text-5xl font-bold tracking-tight">Why Shotline exists.</h1>
+        <h1 className="font-display text-5xl font-bold tracking-tight">Why Industrial Sync exists.</h1>
         <div className="mt-8 flex flex-col gap-5 text-lg text-black/65 leading-relaxed">
           <p>
-            Shotline began on a real factory floor in Nairobi — a manufacturer
+            Industrial Sync began on a real factory floor in Nairobi — a manufacturer
             running injection moulding machines all day, selling thousands of
             units a week, and still unable to answer the simplest question in
             manufacturing: <em className="text-black">what do we have, and what should we make next?</em>
@@ -22,7 +22,7 @@ export default function AboutPage() {
             picture — and for the first time the numbers agreed with the floor.
           </p>
           <p>
-            We deliberately do not try to be everything. Shotline is not an ERP,
+            We deliberately do not try to be everything. Industrial Sync is not an ERP,
             not an accounting suite, not an HR system. It does one thing with
             depth: production, materials and stock for factories that mould —
             built to survive power cuts, patchy internet and busy hands, because
@@ -47,7 +47,7 @@ export default function AboutPage() {
             ))}
           </ul>
           <p className="mt-8 text-sm text-black/45">
-            Shotline is built by Telemetry, Nairobi.
+            Industrial Sync is built by Telemetry, Nairobi.
           </p>
         </div>
       </section>

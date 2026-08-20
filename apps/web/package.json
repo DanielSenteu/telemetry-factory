@@ -1,5 +1,5 @@
 {
-  "name": "@shotline/web",
+  "name": "@industrial-sync/web",
   "version": "0.1.0",
   "private": true,
   "scripts": {
