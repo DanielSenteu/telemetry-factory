@@ -25,10 +25,11 @@ const LINES = [
   { text: "Welcome to", cls: "text-2xl md:text-3xl text-white/60" },
   { text: "Industrial-Sync", cls: "font-display text-6xl md:text-8xl font-bold tracking-tight text-white" },
   { text: "Your all-in-one manufacturing solution", cls: "text-xl md:text-2xl text-white/70" },
+  { text: "> running a machine cycle …", cls: "font-mono text-sm md:text-base text-white/45 pt-4" },
 ];
 const typeDelay = () => 55 + Math.random() * 52; // human jitter, not a metronome
 const LINE_PAUSE_MS = 620;
-const HOLD_MS = 1800;
+const HOLD_MS = 1000;
 
 // ── The cycle timeline (s from the moment Act 2 starts) ──
 const T_MORPH = 0.15;  const D_MORPH = 0.55;  // cursor → gate
@@ -38,11 +39,12 @@ const T_REL   = 2.15;                          // clamp release jolt
 const T_OPEN  = 2.3;   const D_SPLIT = 1.2;   // platens part
 const HERO_EVENT_MS = 2750;                    // EJECT: page rises inside the gap
 
+// Plain words, shown AT the seam — the intro narrates itself.
 const STAGES: Array<[label: string, atMs: number]> = [
-  ["INJECT", 720],
-  ["COOL", 1600],
-  ["OPEN", 2150],
-  ["EJECT", 2750],
+  ["injecting", 720],
+  ["cooling", 1600],
+  ["opening the mould", 2100],
+  ["", 2750], // captions end; the page rising needs no words
 ];
 
 const SEEN_KEY = "industrial-sync-intro-seen";
@@ -58,7 +60,7 @@ const CHROME = [
 export function Intro() {
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState<"typing" | "open" | "done">("typing");
-  const [typed, setTyped] = useState<string[]>(["", "", ""]);
+  const [typed, setTyped] = useState<string[]>(["", "", "", ""]);
   const [line, setLine] = useState(0);
   const [stage, setStage] = useState(-1); // index into STAGES once opening
   const [cursorRect, setCursorRect] = useState<{ x: number; y: number; h: number } | null>(null);
@@ -222,19 +224,17 @@ export function Intro() {
           ))}
         </motion.div>
 
-        {/* The cycle HUD — the machine narrating its own stages. */}
-        {opening && (
+        {/* The narration — one readable word at the seam, where the eyes are. */}
+        {opening && stage >= 0 && STAGES[stage][0] !== "" && (
           <motion.div
-            className="absolute top-6 inset-x-0 flex justify-center gap-5 font-mono text-[11px] tracking-widest"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: [0, 1, 1, 0] }}
-            transition={{ duration: T_OPEN + D_SPLIT - 0.4, times: [0, 0.1, 0.82, 1] }}
+            key={STAGES[stage][0]}
+            className="absolute inset-x-0 text-center font-mono text-sm md:text-base tracking-[0.2em] text-white/75"
+            style={{ top: midY + 26 }}
+            initial={{ opacity: 0, y: 5 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            {STAGES.map(([label], i) => (
-              <span key={label} className={i === stage ? "text-white" : i < stage ? "text-white/45" : "text-white/20"}>
-                {label}
-              </span>
-            ))}
+            {STAGES[stage][0]}
           </motion.div>
         )}
 
