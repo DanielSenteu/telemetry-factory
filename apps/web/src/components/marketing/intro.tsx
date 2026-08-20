@@ -88,20 +88,6 @@ function CycleReadout() {
   );
 }
 
-// The final, solid state of the whole stack — rendered identically inside each
-// platen so the wordmark physically splits with the mould.
-function SolidStack() {
-  return (
-    <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8">
-      <div className="text-2xl md:text-3xl text-white/60">{WELCOME}</div>
-      <svg viewBox={VB} className="w-[min(92vw,900px)]" aria-hidden>
-        <text {...TEXT_PROPS} fill="#ffffff">{WORD}</text>
-      </svg>
-      <div className="text-xl md:text-2xl text-white/70">{TAGLINE}</div>
-    </div>
-  );
-}
-
 export function Intro() {
   const reduced = useReducedMotion();
   const [phase, setPhase] = useState<"typing" | "mould" | "done">("typing");
@@ -173,29 +159,23 @@ export function Intro() {
         {/* Platens: black halves, each carrying its slice of the finished
             wordmark. Clamp-jolt 3px, then part — the name splits mid-letter. */}
         <motion.div
-          className="absolute inset-x-0 top-0 h-1/2 bg-black overflow-hidden"
+          className="absolute inset-x-0 top-0 h-1/2 bg-black"
           animate={mould ? { y: [0, 3, 3, "-100%"] } : { y: 0 }}
           transition={mould ? { duration: T_SPLIT - T_REL + D_SPLIT, delay: T_REL, times: [0, 0.09, 0.12, 1], ease: ["easeOut", "linear", PLATEN_EASE] } : undefined}
           onAnimationComplete={() => mould && finish()}
-          style={split ? { boxShadow: "0 1px 0 rgba(255,255,255,0.14)" } : undefined}
-        >
-          <div className={`absolute inset-x-0 top-0 h-screen ${split ? "opacity-100" : "opacity-0"}`}>
-            <SolidStack />
-          </div>
-        </motion.div>
+        />
         <motion.div
-          className="absolute inset-x-0 bottom-0 h-1/2 bg-black overflow-hidden"
+          className="absolute inset-x-0 bottom-0 h-1/2 bg-black"
           animate={mould ? { y: [0, -3, -3, "100%"] } : { y: 0 }}
           transition={mould ? { duration: T_SPLIT - T_REL + D_SPLIT, delay: T_REL, times: [0, 0.09, 0.12, 1], ease: ["easeOut", "linear", PLATEN_EASE] } : undefined}
-          style={split ? { boxShadow: "0 -1px 0 rgba(255,255,255,0.14)" } : undefined}
-        >
-          <div className={`absolute inset-x-0 bottom-0 h-screen ${split ? "opacity-100" : "opacity-0"}`}>
-            <SolidStack />
-          </div>
-        </motion.div>
+        />
 
         {/* The main stage — hidden the instant the platens take over. */}
-        <div className={`absolute inset-0 flex flex-col items-center justify-center gap-2 px-8 ${split ? "opacity-0" : "opacity-100"}`}>
+        <motion.div
+          className="absolute inset-0 flex flex-col items-center justify-center gap-2 px-8"
+          animate={split ? { opacity: 0 } : { opacity: 1 }}
+          transition={{ duration: 0.4, ease: "easeOut" }}
+        >
           <div className="text-2xl md:text-3xl text-white/60" style={{ minHeight: "1em" }}>
             {typed}
             {phase === "typing" && (
@@ -303,7 +283,7 @@ export function Intro() {
           >
             {TAGLINE}
           </motion.div>
-        </div>
+        </motion.div>
 
         {/* Quiet machine chrome. */}
         <motion.div animate={split ? { opacity: 0 } : { opacity: 1 }} transition={{ duration: 0.25 }}>
