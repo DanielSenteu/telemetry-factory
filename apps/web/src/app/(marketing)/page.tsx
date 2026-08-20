@@ -24,7 +24,7 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={0.2}>
             <p className="text-lg text-black/60 leading-relaxed max-w-lg">
-              Industrial Sync wires into your moulding machines and shows you — shot by
+              Industrial-Sync wires into your moulding machines and shows you — shot by
               shot — what is running, what is in stock, and what to make next.
             </p>
           </Reveal>
@@ -68,12 +68,12 @@ export default function HomePage() {
         <h2 className="font-display text-4xl font-bold tracking-tight">One loop, closed.</h2>
         <p className="mt-3 text-lg text-black/55 max-w-2xl">
           A factory is a flow: material comes in, machines turn it into product,
-          product goes out. Most software watches one piece. Industrial Sync watches the
+          product goes out. Most software watches one piece. Industrial-Sync watches the
           whole loop — so the numbers finally agree with the floor.
         </p>
         <div className="mt-10 grid md:grid-cols-4 gap-4">
           {[
-            ["01", "Material arrives", "Photograph the supplier invoice. Industrial Sync reads it and books the polypropylene into stock — at what it actually cost."],
+            ["01", "Material arrives", "Photograph the supplier invoice. Industrial-Sync reads it and books the polypropylene into stock — at what it actually cost."],
             ["02", "Machines convert it", "Every shot is counted from the machine's own controller. Each product's recipe deducts the exact grams of material used."],
             ["03", "Product ships out", "Sales flow in from your invoicing system and deduct finished goods. The shelf count is real, not remembered."],
             ["04", "You decide what's next", "Demand, stock cover, machine hours and material sufficiency in one row — before the heaters are warm."],
@@ -94,7 +94,7 @@ export default function HomePage() {
           <div>
             <h2 className="font-display text-4xl font-bold tracking-tight">Built where the power cuts.</h2>
             <p className="mt-4 text-white/60 text-lg leading-relaxed">
-              Industrial Sync was built on a working factory floor in Nairobi, not in a
+              Industrial-Sync was built on a working factory floor in Nairobi, not in a
               demo lab. That shows in the details: when the power comes back
               before the internet does, your machines run and your data waits at
               the factory — then catches up on its own, in order, with nothing

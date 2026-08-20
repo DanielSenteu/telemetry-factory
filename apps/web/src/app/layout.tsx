@@ -11,9 +11,9 @@ const body = Geist({ subsets: ["latin"], variable: "--font-body" });
 const mono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500", "600"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "Industrial Sync",
+  title: "Industrial-Sync",
   description:
-    "Industrial Sync wires into your injection moulding machines and shows you — shot by shot — what is running, what is in stock, and what to make next.",
+    "Industrial-Sync wires into your injection moulding machines and shows you — shot by shot — what is running, what is in stock, and what to make next.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

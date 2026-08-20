@@ -128,7 +128,7 @@
     @apply font-sans;
   }
 }
-/* ── Industrial Sync brand layer ─────────────────────────────
+/* ── Industrial-Sync brand layer ─────────────────────────────
    White glossy base + ONE accent. The accent is the running-machine green the
    product already uses for live status — swap it here and the whole site follows. */
 @theme inline {

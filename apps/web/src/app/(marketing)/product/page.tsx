@@ -10,7 +10,7 @@ const SECTIONS = [
     kicker: "THE FLOOR, LIVE",
     title: "Every machine, every shot, as it happens.",
     body: [
-      "Industrial Sync reads each machine's own controller — the same numbers the machine trusts. You see who is running, idle, in alarm or offline; the product on the mould; today's count; the cycle time; and every alarm with its code and when it started.",
+      "Industrial-Sync reads each machine's own controller — the same numbers the machine trusts. You see who is running, idle, in alarm or offline; the product on the mould; today's count; the cycle time; and every alarm with its code and when it started.",
       "Shots become parts automatically: an 8-cavity mould at 1,000 shots is 8,000 containers, minus the scrap the machine itself reports. Nobody writes tallies on a clipboard at 5pm.",
     ],
     facts: ["running · idle · alarm · offline — at a glance", "cycle time against what's normal for that mould", "alarms with codes, timestamps and durations", "readable from a metre away, on the tablet in your hand"],
@@ -20,7 +20,7 @@ const SECTIONS = [
     kicker: "MATERIALS & STOCK",
     title: "Stock that tells the truth.",
     body: [
-      "Raw material comes in the way it actually arrives: a supplier invoice. Photograph it — Industrial Sync reads the lines, books the kilograms into stock at what they really cost, and remembers that supplier's names for next time.",
+      "Raw material comes in the way it actually arrives: a supplier invoice. Photograph it — Industrial-Sync reads the lines, books the kilograms into stock at what they really cost, and remembers that supplier's names for next time.",
       "Every product carries its recipe: grams of material per unit, cavities per mould, runner weight. When the machine makes 1,000 units, the recipe deducts the exact material used — and the runners go into a regrind pool, because sprues are material, not waste.",
       "The result is a stock ledger where nothing is typed and nothing drifts: additions from invoices, deductions from production and sales, every line traceable to the event that caused it.",
     ],
@@ -31,7 +31,7 @@ const SECTIONS = [
     kicker: "WHAT TO MAKE NEXT",
     title: "The morning decision, answered.",
     body: [
-      "Industrial Sync mirrors your sales — from the invoicing system you already use — and turns three years of history into a demand rate per product. Against live stock, that becomes weeks of cover: which products are safe, which run out this week.",
+      "Industrial-Sync mirrors your sales — from the invoicing system you already use — and turns three years of history into a demand rate per product. Against live stock, that becomes weeks of cover: which products are safe, which run out this week.",
       "Then it does the arithmetic managers do on paper: to make 12,000 stool containers on IMM-2 takes 8.4 hours and 48 kg of polypropylene — and tells you if the polypropylene isn't there.",
     ],
     facts: ["demand per product from your real sales history", "weeks-of-cover on every finished good", "machine hours and material needed, per suggestion", "material shortfalls flagged before the run starts"],
@@ -52,7 +52,7 @@ const SECTIONS = [
     kicker: "WORKS WITH WHAT YOU HAVE",
     title: "Keep your invoicing. We read it.",
     body: [
-      "You do not have to change how you sell. Industrial Sync mirrors sales from your invoicing system — read-only, one direction, nothing written back. Link each of their item names to your products once; every past and future invoice resolves automatically.",
+      "You do not have to change how you sell. Industrial-Sync mirrors sales from your invoicing system — read-only, one direction, nothing written back. Link each of their item names to your products once; every past and future invoice resolves automatically.",
       "In our first deployment we mirrored 24,000 invoices — three years of sales — in an afternoon, and the factory's demand picture existed for the first time.",
     ],
     facts: ["read-only — we never touch your invoicing data", "link an item once, history resolves retroactively", "sales deduct finished goods automatically", "works today with Zoho Books; more to come"],
