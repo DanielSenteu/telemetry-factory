@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LiveMachineCard } from "@/components/marketing/live-machine-card";
+import { RevealInView } from "@/components/marketing/reveal";
 
 // Every claim on this page maps to something the software actually does.
 // When the explainer video exists it lands at the top of this page.
@@ -71,7 +73,7 @@ export default function ProductPage() {
       </section>
       {SECTIONS.map((s, i) => (
         <section key={s.id} id={s.id} className={i % 2 ? "bg-white border-y border-black/5" : ""}>
-          <div className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-2 gap-12">
+          <RevealInView className="mx-auto max-w-6xl px-6 py-16 grid md:grid-cols-2 gap-12">
             <div className={i % 2 ? "md:order-2" : ""}>
               <div className="font-mono text-sm text-[var(--accent)] font-semibold tracking-wider">{s.kicker}</div>
               <h2 className="mt-2 font-display text-3xl font-bold tracking-tight">{s.title}</h2>
@@ -80,6 +82,11 @@ export default function ProductPage() {
               ))}
             </div>
             <div className={`flex flex-col gap-3 justify-center ${i % 2 ? "md:order-1" : ""}`}>
+              {s.id === "floor" && (
+                <div className="flex justify-center pb-2">
+                  <LiveMachineCard />
+                </div>
+              )}
               {s.facts.map((f, j) => (
                 <div key={j} className="gloss rounded-xl px-5 py-4 text-sm font-medium flex items-center gap-3">
                   <span className="size-1.5 rounded-full bg-[var(--accent)] shrink-0" />
@@ -87,7 +94,7 @@ export default function ProductPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </RevealInView>
         </section>
       ))}
       <section className="mx-auto max-w-6xl px-6 py-20 text-center flex flex-col items-center gap-5">

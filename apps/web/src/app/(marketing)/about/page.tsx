@@ -1,9 +1,11 @@
+import { RevealInView } from "@/components/marketing/reveal";
+
 export default function AboutPage() {
   return (
     <>
       <section className="mx-auto max-w-3xl px-6 pt-20 pb-16">
         <h1 className="font-display text-5xl font-bold tracking-tight">Why Industrial-Sync exists.</h1>
-        <div className="mt-8 flex flex-col gap-5 text-lg text-black/65 leading-relaxed">
+        <RevealInView className="mt-8 flex flex-col gap-5 text-lg text-black/65 leading-relaxed">
           <p>
             Industrial-Sync began on a real factory floor in Nairobi — a manufacturer
             running injection moulding machines all day, selling thousands of
@@ -28,11 +30,11 @@ export default function AboutPage() {
             built to survive power cuts, patchy internet and busy hands, because
             that is what real floors are like.
           </p>
-        </div>
+        </RevealInView>
       </section>
 
       <section className="bg-white border-y border-black/5">
-        <div className="mx-auto max-w-3xl px-6 py-14">
+        <RevealInView className="mx-auto max-w-3xl px-6 py-14">
           <h2 className="font-display text-2xl font-bold">Where this goes.</h2>
           <ul className="mt-6 flex flex-col gap-4">
             {[
@@ -49,7 +51,7 @@ export default function AboutPage() {
           <p className="mt-8 text-sm text-black/45">
             Industrial-Sync is built by Telemetry, Nairobi.
           </p>
-        </div>
+        </RevealInView>
       </section>
     </>
   );

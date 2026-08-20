@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Intro } from "@/components/marketing/intro";
 import { LiveMachineCard } from "@/components/marketing/live-machine-card";
 import { Reveal, RevealInView } from "@/components/marketing/reveal";
+import { Counter } from "@/components/marketing/counter";
+import { StoryFeed } from "@/components/marketing/story-feed";
 
 export default function HomePage() {
   return (
@@ -44,19 +46,19 @@ export default function HomePage() {
       <section className="border-y border-black/5 bg-white">
         <RevealInView className="mx-auto max-w-6xl px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <div className="font-mono text-3xl font-semibold">~2s</div>
+            <div className="font-mono text-3xl font-semibold"><Counter target={2} prefix="~" suffix="s" duration={0.9} /></div>
             <div className="mt-1 text-sm text-black/50">between machine readings — you see cycles as they happen</div>
           </div>
           <div>
-            <div className="font-mono text-3xl font-semibold">15+</div>
+            <div className="font-mono text-3xl font-semibold"><Counter target={15} suffix="+" duration={1.1} /></div>
             <div className="mt-1 text-sm text-black/50">parameters read per machine: shots, scrap, cycle time, mould, alarms, energy</div>
           </div>
           <div>
-            <div className="font-mono text-3xl font-semibold">0</div>
+            <div className="font-mono text-3xl font-semibold"><Counter target={0} /></div>
             <div className="mt-1 text-sm text-black/50">readings lost to an internet cut — data queues at the factory and catches up</div>
           </div>
           <div>
-            <div className="font-mono text-3xl font-semibold">24,000+</div>
+            <div className="font-mono text-3xl font-semibold"><Counter target={24000} suffix="+" duration={1.8} /></div>
             <div className="mt-1 text-sm text-black/50">sales invoices mirrored in our first deployment — three years of demand history</div>
           </div>
         </RevealInView>
@@ -106,21 +108,7 @@ export default function HomePage() {
               unit costs stay correct, because the recipe does the arithmetic.
             </p>
           </div>
-          <div className="flex flex-col gap-3 font-mono text-sm">
-            {[
-              ["07:42", "floor started — first cycle of the day"],
-              ["09:12", "+240 containers made — IMM-1"],
-              ["09:12", "−960 g polypropylene used — recipe"],
-              ["11:03", "power cut — data queued at factory"],
-              ["11:37", "power back — 34 min of readings caught up"],
-              ["14:20", "−500 containers sold — invoice INV024285"],
-            ].map(([t, e], i) => (
-              <div key={i} className="flex gap-4 rounded-xl bg-white/5 px-4 py-3">
-                <span className="text-white/40">{t}</span>
-                <span className="text-white/85">{e}</span>
-              </div>
-            ))}
-          </div>
+          <StoryFeed />
         </RevealInView>
       </section>
 

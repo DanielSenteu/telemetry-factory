@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { RevealInView } from "@/components/marketing/reveal";
 
 export default function HowItWorksPage() {
   return (
@@ -12,22 +13,26 @@ export default function HowItWorksPage() {
         </p>
       </section>
 
-      <section className="mx-auto max-w-6xl px-6 pb-16 grid md:grid-cols-3 gap-6">
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="grid md:grid-cols-3 gap-6">
         {[
           ["1", "Book a visit", "A technician walks your floor with you. We look at your machines and their controllers, your material flow, and how you sell today. You get a straight answer on what wiring in takes — and a quote. No obligation."],
           ["2", "We wire it in", "A small computer joins your factory network and reads each machine's controller. Your machines never touch the internet — they stay on their own local network, exactly as the manufacturers intend. Nothing about how you run production changes."],
           ["3", "You watch it flow", "The dashboard is live from day one: machines first, then stock as invoices and recipes come in, then demand as your sales history mirrors across. Most of the setup is us; your part is naming things once — this item is that product."],
-        ].map(([n, t, d]) => (
-          <div key={n} className="gloss rounded-2xl p-7">
-            <div className="font-mono size-11 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center text-lg font-semibold">{n}</div>
-            <h2 className="mt-4 font-display text-xl font-bold">{t}</h2>
-            <p className="mt-2 text-sm text-black/60 leading-relaxed">{d}</p>
-          </div>
+        ].map(([n, t, d], i) => (
+          <RevealInView key={n} delay={i * 0.12}>
+            <div className="gloss rounded-2xl p-7 h-full">
+              <div className="font-mono size-11 rounded-full bg-[var(--accent-soft)] text-[var(--accent)] flex items-center justify-center text-lg font-semibold">{n}</div>
+              <h2 className="mt-4 font-display text-xl font-bold">{t}</h2>
+              <p className="mt-2 text-sm text-black/60 leading-relaxed">{d}</p>
+            </div>
+          </RevealInView>
         ))}
+        </div>
       </section>
 
       <section className="bg-white border-y border-black/5">
-        <div className="mx-auto max-w-6xl px-6 py-16">
+        <RevealInView className="mx-auto max-w-6xl px-6 py-16">
           <h2 className="font-display text-3xl font-bold tracking-tight">Straight answers to fair questions.</h2>
           <div className="mt-8 grid md:grid-cols-2 gap-x-12 gap-y-8">
             {[
@@ -44,7 +49,7 @@ export default function HowItWorksPage() {
               </div>
             ))}
           </div>
-        </div>
+        </RevealInView>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 py-20 text-center flex flex-col items-center gap-5">
