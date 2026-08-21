@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { MaterialsStock } from "@/components/app/materials-stock";
 import { Receive } from "@/components/app/receive";
+import { Regrind } from "@/components/app/regrind";
+import { MovementHistory } from "@/components/app/movement-history";
 
 const TABS = [
   { key: "stock", label: "Stock" },
   { key: "receive", label: "Receive" },
   { key: "regrind", label: "Regrind" },
+  { key: "history", label: "History" },
 ] as const;
 
 export function MaterialsTabs({ orgId }: { orgId: number }) {
@@ -29,12 +32,8 @@ export function MaterialsTabs({ orgId }: { orgId: number }) {
       </div>
       {tab === "stock" && <MaterialsStock orgId={orgId} />}
       {tab === "receive" && <Receive orgId={orgId} />}
-      {tab === "regrind" && (
-        <div className="gloss rounded-2xl p-8 max-w-xl">
-          <h2 className="font-display text-lg font-bold">Regrind pool</h2>
-          <p className="mt-2 text-sm text-black/55">Coming next — balances per material and logging ground runners back into stock.</p>
-        </div>
-      )}
+      {tab === "regrind" && <Regrind orgId={orgId} />}
+      {tab === "history" && <MovementHistory orgId={orgId} />}
     </div>
   );
 }

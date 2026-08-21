@@ -59,3 +59,60 @@ export async function listMovements(productId: number, limit = 40) {
   if (error) throw new Error(error.message);
   return data || [];
 }
+
+// ── Regrind pool ──────────────────────────────────────
+// Runners accumulate automatically when production is confirmed (recipes carry
+// runner weight per shot). Logging use moves grams out of the pool and back
+// into raw material stock as 'regrind_return' — fixed by migration 55; this is
+// the feature's first working UI.
+
+export type RegrindBalance = {
+  material_product_id: number;
+  material_name: string;
+  balance_g: number;
+  total_in_g: number;
+  total_out_g: number;
+};
+
+export async function getRegrindBalances(orgId: number): Promise<RegrindBalance[]> {
+  const { data, error } = await supabase.rpc("regrind_balances", { p_org_id: orgId });
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+export async function postRegrindUse(orgId: number, materialProductId: number, qtyG: number, note: string | null) {
+  const { error } = await supabase.rpc("post_regrind_use", {
+    p_org_id: orgId,
+    p_material_product_id: materialProductId,
+    p_qty_g: qtyG,
+    p_note: note,
+  });
+  if (error) throw new Error(error.message);
+}
+
+// ── Movement history ──────────────────────────────────
+
+export type Movement = {
+  id: number;
+  product_id: number;
+  quantity: number;
+  movement_type: string;
+  unit_cost: number | null;
+  source_type: string | null;
+  note: string | null;
+  created_at: string;
+  products: { name: string; unit_of_measure: string } | null;
+};
+
+export async function listRecentMovements(orgId: number, productId?: number, limit = 60): Promise<Movement[]> {
+  let q = supabase
+    .from("stock_movements")
+    .select("id, product_id, quantity, movement_type, unit_cost, source_type, note, created_at, products(name, unit_of_measure)")
+    .eq("org_id", orgId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+  if (productId) q = q.eq("product_id", productId);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return (data || []) as unknown as Movement[];
+}
