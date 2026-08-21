@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { MachinesLive } from "@/components/app/machines-live";
+import { ProductionTabs } from "@/components/app/production-tabs";
 
 export default async function ProductionPage() {
   const supabase = await createClient();
@@ -9,5 +9,5 @@ export default async function ProductionPage() {
     .select("org_id")
     .eq("user_id", user!.id)
     .limit(1);
-  return <MachinesLive orgId={accounts![0].org_id} />;
+  return <ProductionTabs orgId={accounts![0].org_id} />;
 }
