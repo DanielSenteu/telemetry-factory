@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { MaterialsStock } from "@/components/app/materials-stock";
+import { MaterialsTabs } from "@/components/app/materials-tabs";
 
 export default async function MaterialsPage() {
   const supabase = await createClient();
@@ -9,5 +9,5 @@ export default async function MaterialsPage() {
     .select("org_id")
     .eq("user_id", user!.id)
     .limit(1);
-  return <MaterialsStock orgId={accounts![0].org_id} />;
+  return <MaterialsTabs orgId={accounts![0].org_id} />;
 }
