@@ -2,6 +2,11 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  ConfirmOutputDialog,
+  RecordEventDialog,
+  MapCraftDialog,
+} from "@/components/app/production-dialogs";
+import {
   getMachineDashboard,
   listFactoryAgents,
   deriveMachineState,
@@ -29,7 +34,17 @@ const STATE_STYLE: Record<string, { word: string; text: string; ring: string; le
   offline: { word: "OFFLINE", text: "text-black/40", ring: "opacity-60", led: "bg-black/25" },
 };
 
-function MachineCard({ row, nowMs }: { row: MachineRow; nowMs: number }) {
+function MachineCard({
+  row,
+  nowMs,
+  onConfirm,
+  onMap,
+}: {
+  row: MachineRow;
+  nowMs: number;
+  onConfirm: (row: MachineRow) => void;
+  onMap: (row: MachineRow) => void;
+}) {
   const state = deriveMachineState(row, nowMs);
   const s = STATE_STYLE[state];
   const job = row.product_name ?? (row.craft_id ? `Job ${row.craft_id}` : null);
@@ -50,9 +65,12 @@ function MachineCard({ row, nowMs }: { row: MachineRow; nowMs: number }) {
       <div className="text-sm font-medium text-black/70 min-h-5">
         {job ?? <span className="text-black/40">No job</span>}
         {!row.product_name && row.craft_id && (
-          <span className="ml-2 text-[11px] font-mono font-semibold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">
-            unmapped
-          </span>
+          <button
+            onClick={() => onMap(row)}
+            className="ml-2 text-[11px] font-mono font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded px-2 py-1 transition-colors"
+          >
+            unmapped — link it
+          </button>
         )}
       </div>
 
@@ -78,6 +96,14 @@ function MachineCard({ row, nowMs }: { row: MachineRow; nowMs: number }) {
         ) : null}
         <span className="ml-auto text-black/35">{formatNairobi(row.observed_at)}</span>
       </div>
+      {row.product_id != null && goodParts(row) > 0 && (
+        <button
+          onClick={() => onConfirm(row)}
+          className="mt-1 h-11 rounded-lg border border-black/10 text-sm font-semibold hover:bg-black/[0.04] transition-colors"
+        >
+          Confirm today&apos;s output
+        </button>
+      )}
     </div>
   );
 }
@@ -88,6 +114,9 @@ export function MachinesLive({ orgId }: { orgId: number }) {
   const [agents, setAgents] = useState<FactoryAgent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState<MachineRow | null>(null);
+  const [mapping, setMapping] = useState<MachineRow | null>(null);
+  const [recording, setRecording] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
@@ -135,11 +164,19 @@ export function MachinesLive({ orgId }: { orgId: number }) {
             </button>
           ))}
         </div>
-        {updatedAt && (
-          <span className="ml-auto text-xs font-mono text-black/40">
-            updated {formatNairobi(new Date(updatedAt).toISOString())}
-          </span>
-        )}
+        <div className="ml-auto flex items-center gap-3">
+          {updatedAt && (
+            <span className="text-xs font-mono text-black/40 hidden sm:inline">
+              updated {formatNairobi(new Date(updatedAt).toISOString())}
+            </span>
+          )}
+          <button
+            onClick={() => setRecording(true)}
+            className="h-11 px-4 rounded-lg bg-[var(--ink)] text-white text-sm font-semibold hover:bg-black transition-colors"
+          >
+            Record an event
+          </button>
+        </div>
       </div>
 
       {collectorDown && (
@@ -172,9 +209,28 @@ export function MachinesLive({ orgId }: { orgId: number }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
-            <MachineCard key={r.machine_id} row={r} nowMs={nowMs} />
+            <MachineCard key={r.machine_id} row={r} nowMs={nowMs} onConfirm={setConfirming} onMap={setMapping} />
           ))}
         </div>
+      )}
+
+      {confirming && (
+        <ConfirmOutputDialog
+          orgId={orgId}
+          machine={confirming}
+          productId={confirming.product_id}
+          suggestedGood={goodParts(confirming)}
+          suggestedScrap={Math.round(confirming.today_scrap)}
+          open
+          onClose={() => setConfirming(null)}
+          onDone={load}
+        />
+      )}
+      {mapping && (
+        <MapCraftDialog orgId={orgId} machine={mapping} open onClose={() => setMapping(null)} onDone={load} />
+      )}
+      {recording && (
+        <RecordEventDialog orgId={orgId} open onClose={() => setRecording(false)} onDone={load} />
       )}
     </div>
   );

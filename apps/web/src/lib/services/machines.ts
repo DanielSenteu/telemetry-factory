@@ -20,6 +20,7 @@ export type MachineRow = {
   motor_state: number | null;
   cycle_time: number | null;
   craft_id: string | null;
+  product_id: number | null;
   product_name: string | null;
   mold_cavity: number | null;
   power_kwh: number | null;
