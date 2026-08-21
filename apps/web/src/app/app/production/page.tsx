@@ -1,8 +1,13 @@
-export default function ProductionPage() {
-  return (
-    <div className="gloss rounded-2xl p-8">
-      <h1 className="font-display text-2xl font-bold">Production</h1>
-      <p className="mt-2 text-black/55">Being built — the ported services are ready behind this screen.</p>
-    </div>
-  );
+import { createClient } from "@/lib/supabase/server";
+import { MachinesLive } from "@/components/app/machines-live";
+
+export default async function ProductionPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data: accounts } = await supabase
+    .from("accounts")
+    .select("org_id")
+    .eq("user_id", user!.id)
+    .limit(1);
+  return <MachinesLive orgId={accounts![0].org_id} />;
 }
