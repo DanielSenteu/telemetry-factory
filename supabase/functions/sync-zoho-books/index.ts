@@ -94,54 +94,62 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-const ACCOUNTS = Deno.env.get("ZOHO_ACCOUNTS_DOMAIN") ?? "https://accounts.zoho.com";
-const API = Deno.env.get("ZOHO_API_DOMAIN") ?? "https://www.zohoapis.com";
+// The SERVER-BASED OAuth app — ours, one for all customers. Per-connection
+// data centre (accounts server + api domain) comes from the connection config,
+// not env, so factories on .eu/.in/.com all work through the same function.
+const OAUTH_CLIENT_ID = Deno.env.get("ZOHO_OAUTH_CLIENT_ID") ?? Deno.env.get("ZOHO_CLIENT_ID")!;
+const OAUTH_CLIENT_SECRET = Deno.env.get("ZOHO_OAUTH_CLIENT_SECRET") ?? Deno.env.get("ZOHO_CLIENT_SECRET")!;
 
-/** Access tokens live an hour; we mint a fresh one per invocation and never store it. */
-async function getAccessToken(orgId: number): Promise<string> {
-  const refresh =
-    Deno.env.get(`ZOHO_REFRESH_TOKEN_${orgId}`) ?? Deno.env.get("ZOHO_REFRESH_TOKEN");
-  if (!refresh) throw new Error(`no Zoho refresh token configured for org ${orgId}`);
+type Conn = {
+  id: number;
+  org_id: number;
+  external_org_id: string;
+  config: Record<string, unknown>;
+  cursor_modified_at: string | null;
+  backfill_done: boolean;
+  active: boolean;
+};
 
-  const res = await fetch(`${ACCOUNTS}/oauth/v2/token`, {
+/** Per-connection rate context — cron syncs many connections; a module-level
+ *  counter would let one org's quota gate another's. */
+type Rate = { remaining: number };
+
+async function getAccessToken(refreshToken: string, accountsServer: string): Promise<string> {
+  const res = await fetch(`${accountsServer}/oauth/v2/token`, {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
-      client_id: Deno.env.get("ZOHO_CLIENT_ID")!,
-      client_secret: Deno.env.get("ZOHO_CLIENT_SECRET")!,
+      client_id: OAUTH_CLIENT_ID,
+      client_secret: OAUTH_CLIENT_SECRET,
       grant_type: "refresh_token",
-      refresh_token: refresh,
+      refresh_token: refreshToken,
     }),
   });
   const body = await res.json();
-  // Zoho answers 200 with an {error} body rather than an HTTP error status.
   if (!body.access_token) throw new Error(`token refresh failed: ${body.error ?? res.status}`);
   return body.access_token as string;
 }
 
-let rateRemaining = Number.POSITIVE_INFINITY;
-
 async function zohoGet(
+  apiDomain: string,
   path: string,
   params: Record<string, string>,
   token: string,
-  orgId: string,
+  zohoOrg: string,
+  rate: Rate,
 ): Promise<Record<string, unknown>> {
-  const qs = new URLSearchParams({ organization_id: orgId, ...params });
-  const res = await fetch(`${API}/books/v3/${path}?${qs}`, {
+  const qs = new URLSearchParams({ organization_id: zohoOrg, ...params });
+  const res = await fetch(`${apiDomain}/books/v3/${path}?${qs}`, {
     headers: { Authorization: `Zoho-oauthtoken ${token}` },
   });
-
   const remaining = res.headers.get("x-rate-limit-remaining");
-  if (remaining) rateRemaining = Number(remaining);
-
+  if (remaining) rate.remaining = Number(remaining);
   if (res.status === 429) throw new Error("zoho rate limit hit (429)");
   const body = await res.json();
   if (body.code && body.code !== 0) throw new Error(`zoho ${body.code}: ${body.message}`);
   return body;
 }
 
-/** Bounded-concurrency map — plain, because a dependency for this would be silly. */
 async function pooled<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const out: R[] = new Array(items.length);
   let cursor = 0;
@@ -156,8 +164,8 @@ async function pooled<T, R>(items: T[], limit: number, fn: (item: T) => Promise<
 }
 
 /** Zoho's shape → the generic shape the spine speaks. The ONLY place field
- *  names are translated. Note item_total is net of tax on inclusive-tax
- *  invoices, which is what we want for demand revenue. */
+ *  names are translated. item_total is net of tax on inclusive-tax invoices,
+ *  which is what we want for demand revenue. */
 function normalise(detail: ZohoInvoiceDetail) {
   const lines = (detail.line_items ?? []) as ZohoLineItem[];
   return {
@@ -184,63 +192,15 @@ function normalise(detail: ZohoInvoiceDetail) {
   };
 }
 
-serve(async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
-  if (req.method !== "POST") return json({ error: "POST only" }, 405);
-
-  let body: { org_id?: number; mode?: string; max_docs?: number };
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: "body must be JSON" }, 400);
-  }
-  const orgId = Number(body.org_id);
-  if (!Number.isInteger(orgId)) return json({ error: "org_id required" }, 400);
-
-  // ── auth: an org admin's JWT, or the cron shared secret ───────────────
-  // Cron has no user to be, so it carries a secret instead. Everything else
-  // must prove admin membership of the org it is asking us to sync.
-  const cronSecret = Deno.env.get("SYNC_CRON_SECRET");
-  const isCron = cronSecret && req.headers.get("x-cron-secret") === cronSecret;
-
-  if (!isCron) {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) return json({ error: "missing Authorization" }, 401);
-    const asUser = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: isAdmin, error } = await asUser.rpc("is_org_admin", { p_org_id: orgId });
-    if (error || !isAdmin) return json({ error: "not an admin of this org" }, 403);
-  }
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-  );
-
-  const { data: conn, error: connError } = await supabase
-    .from("integration_connections")
-    .select("id, org_id, external_org_id, config, cursor_modified_at, active")
-    .eq("org_id", orgId)
-    .eq("provider", PROVIDER)
-    .maybeSingle();
-
-  // Distinguish "no such row" from "could not reach the database" — swallowing
-  // the error makes a misconfigured service key look exactly like a missing
-  // connection, which is a genuinely confusing hour to spend.
-  if (connError) {
-    return json({ error: `could not read connection: ${connError.message}` }, 500);
-  }
-  if (!conn) return json({ error: `no ${PROVIDER} connection for org ${orgId}` }, 404);
-  if (!conn.active) return json({ error: "connection is inactive" }, 409);
-  if (!conn.external_org_id) return json({ error: "connection has no external_org_id" }, 409);
-
-  const mode = body.mode === "backfill" ? "backfill" : "incremental";
-  const maxDocs = Math.max(1, Math.min(body.max_docs ?? DEFAULT_MAX_DOCS, 2000));
+/** Sync one connection. Returns a per-connection summary; never throws — a
+ *  failure is recorded on that connection and the cron loop moves on. */
+// deno-lint-ignore no-explicit-any
+async function syncConnection(supabase: any, conn: Conn, mode: "backfill" | "incremental", maxDocs: number) {
+  const config = conn.config ?? {};
+  const accountsServer = (config.accounts_server as string) ?? "https://accounts.zoho.com";
+  const apiDomain = (config.api_domain as string) ?? "https://www.zohoapis.com";
   const zohoOrg = String(conn.external_org_id);
-  const config = (conn.config ?? {}) as Record<string, unknown>;
+  const rate: Rate = { remaining: Number.POSITIVE_INFINITY };
 
   let processed = 0;
   let done = false;
@@ -248,54 +208,34 @@ serve(async (req: Request) => {
   let backfillPage = Number(config.backfill_page ?? 1);
   let incrementalPage = 1;
 
-  // Postgres hands the cursor back as ...T13:33:54+00:00 while Zoho stamps
-  // ...T16:33:54+0300 — the same instant, but string comparison would call the
-  // Zoho one "newer" forever. Compare epoch milliseconds, never text.
   const cursorMs = conn.cursor_modified_at ? Date.parse(conn.cursor_modified_at) : null;
   const isNewer = (t?: string | null) =>
     !!t && (cursorMs === null || Number.isNaN(cursorMs) || Date.parse(t) > cursorMs);
 
   try {
-    const token = await getAccessToken(orgId);
+    // The token is read from Vault (service role only) — never from env.
+    const { data: refreshToken, error: secErr } = await supabase.rpc("read_integration_secret", {
+      p_connection_id: conn.id,
+    });
+    if (secErr) throw new Error(`could not read token: ${secErr.message}`);
+    if (!refreshToken) throw new Error("no stored token — reconnect needed");
 
-    while (processed < maxDocs && rateRemaining > RATE_LIMIT_FLOOR) {
-      // Backfill sorts by date ASCENDING so that invoices created during a
-      // multi-hour run append at the end instead of shifting the pages we have
-      // not read yet. Incremental sorts by last_modified_time DESCENDING and
-      // stops as soon as it reaches something we already have.
+    const token = await getAccessToken(refreshToken, accountsServer);
+
+    while (processed < maxDocs && rate.remaining > RATE_LIMIT_FLOOR) {
       const params = mode === "backfill"
-        ? {
-          per_page: String(PAGE_SIZE),
-          page: String(backfillPage),
-          sort_column: "date",
-          sort_order: "A",
-        }
-        : {
-          per_page: String(PAGE_SIZE),
-          page: String(incrementalPage),
-          sort_column: "last_modified_time",
-          sort_order: "D",
-        };
+        ? { per_page: String(PAGE_SIZE), page: String(backfillPage), sort_column: "date", sort_order: "A" }
+        : { per_page: String(PAGE_SIZE), page: String(incrementalPage), sort_column: "last_modified_time", sort_order: "D" };
 
-      const list = await zohoGet("invoices", params, token, zohoOrg);
+      const list = await zohoGet(apiDomain, "invoices", params, token, zohoOrg, rate);
       const summaries = (list.invoices ?? []) as ZohoInvoiceSummary[];
-      if (summaries.length === 0) {
-        done = true;
-        break;
-      }
+      if (summaries.length === 0) { done = true; break; }
 
-      // Incremental: everything at or before the cursor is already ours. Sorted
-      // newest-modified first, so the first page that yields nothing fresh means
-      // we have caught up — anything further back is older still.
-      const fresh = mode === "incremental"
-        ? summaries.filter((s) => isNewer(s.last_modified_time))
-        : summaries;
-
+      const fresh = mode === "incremental" ? summaries.filter((s) => isNewer(s.last_modified_time)) : summaries;
       const slice = fresh.slice(0, maxDocs - processed);
 
-      // The expensive part: line items only exist on the detail endpoint.
       const details = await pooled(slice, DETAIL_CONCURRENCY, async (s) => {
-        const d = await zohoGet(`invoices/${s.invoice_id}`, {}, token, zohoOrg);
+        const d = await zohoGet(apiDomain, `invoices/${s.invoice_id}`, {}, token, zohoOrg, rate);
         return d.invoice as ZohoInvoiceDetail;
       });
 
@@ -303,14 +243,13 @@ serve(async (req: Request) => {
         if (!detail) continue;
         const { doc, lines } = normalise(detail);
         const { error } = await supabase.rpc("ingest_external_document", {
-          p_org_id: orgId,
+          p_org_id: conn.org_id,
           p_connection_id: conn.id,
           p_source_system: PROVIDER,
           p_doc: doc,
           p_lines: lines,
         });
         if (error) throw new Error(`ingest failed for ${doc.external_number}: ${error.message}`);
-
         processed += 1;
         if (doc.external_modified_at && (!newestModified || doc.external_modified_at > newestModified)) {
           newestModified = doc.external_modified_at;
@@ -319,49 +258,93 @@ serve(async (req: Request) => {
 
       if (mode === "backfill") {
         backfillPage += 1;
-        if (summaries.length < PAGE_SIZE) done = true;   // last page
+        if (summaries.length < PAGE_SIZE) done = true;
       } else {
-        // Caught up as soon as a page contains anything we already had, or the
-        // provider ran out of pages. Otherwise walk further back in time.
         if (fresh.length < summaries.length || summaries.length < PAGE_SIZE) done = true;
         else incrementalPage += 1;
       }
       if (done) break;
     }
 
-    await supabase
-      .from("integration_connections")
-      .update({
-        // The cursor only advances on a clean slice. A crash mid-run means we
-        // re-read a little next time, which is free (unchanged documents are
-        // no-ops) and far better than skipping.
-        cursor_modified_at: mode === "incremental" && done ? newestModified : conn.cursor_modified_at,
-        config: { ...config, backfill_page: backfillPage, backfill_done: mode === "backfill" ? done : config.backfill_done },
-        last_sync_at: new Date().toISOString(),
-        last_sync_status: done ? "ok" : "partial",
-        last_sync_error: null,
-      })
-      .eq("id", conn.id);
+    await supabase.from("integration_connections").update({
+      cursor_modified_at: mode === "incremental" && done ? newestModified : conn.cursor_modified_at,
+      backfill_done: mode === "backfill" ? done : conn.backfill_done,
+      config: { ...config, backfill_page: backfillPage },
+      last_sync_at: new Date().toISOString(),
+      last_sync_status: done ? "ok" : "partial",
+      last_sync_error: null,
+    }).eq("id", conn.id);
 
-    return json({
-      mode,
-      processed,
-      done,
-      backfill_page: backfillPage,
-      rate_limit_remaining: Number.isFinite(rateRemaining) ? rateRemaining : null,
-    });
+    return { connection_id: conn.id, org_id: conn.org_id, mode, processed, done, rate_remaining: Number.isFinite(rate.remaining) ? rate.remaining : null };
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
-    await supabase
-      .from("integration_connections")
-      .update({
-        last_sync_at: new Date().toISOString(),
-        last_sync_status: "error",
-        last_sync_error: message,
-        // Partial progress is still progress: keep the page we reached.
-        config: { ...config, backfill_page: backfillPage },
-      })
-      .eq("id", conn.id);
-    return json({ error: message, processed }, 502);
+    await supabase.from("integration_connections").update({
+      last_sync_at: new Date().toISOString(),
+      last_sync_status: "error",
+      last_sync_error: message,
+      config: { ...config, backfill_page: backfillPage },
+    }).eq("id", conn.id);
+    return { connection_id: conn.id, org_id: conn.org_id, mode, processed, error: message };
   }
+}
+
+serve(async (req: Request) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method !== "POST") return json({ error: "POST only" }, 405);
+
+  let body: { connection_id?: number; org_id?: number; mode?: string; max_docs?: number };
+  try { body = await req.json(); } catch { return json({ error: "body must be JSON" }, 400); }
+
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+
+  // ── auth ──────────────────────────────────────────────────────────────
+  // Cron carries the shared secret and may sync ALL connections. A human must
+  // prove admin of the specific org/connection they name.
+  const cronSecret = Deno.env.get("SYNC_CRON_SECRET");
+  const isCron = !!cronSecret && req.headers.get("x-cron-secret") === cronSecret;
+
+  const mode = body.mode === "backfill" ? "backfill" : "incremental";
+  const maxDocs = Math.max(1, Math.min(body.max_docs ?? DEFAULT_MAX_DOCS, 2000));
+
+  // ── resolve which connections to sync ─────────────────────────────────
+  let conns: Conn[] = [];
+  const sel = "id, org_id, external_org_id, config, cursor_modified_at, backfill_done, active";
+
+  if (body.connection_id || body.org_id) {
+    let q = supabase.from("integration_connections").select(sel).eq("provider", PROVIDER).eq("active", true);
+    q = body.connection_id ? q.eq("id", body.connection_id) : q.eq("org_id", body.org_id);
+    const { data, error } = await q.maybeSingle();
+    if (error) return json({ error: `could not read connection: ${error.message}` }, 500);
+    if (!data) return json({ error: "no active connection found" }, 404);
+
+    if (!isCron) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader) return json({ error: "missing Authorization" }, 401);
+      const asUser = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: isAdmin, error: adminErr } = await asUser.rpc("is_org_admin", { p_org_id: data.org_id });
+      if (adminErr || !isAdmin) return json({ error: "not an admin of this org" }, 403);
+    }
+    conns = [data as Conn];
+  } else if (isCron) {
+    // Cron with no target = every active connection, incremental. Connections
+    // still backfilling continue their backfill on this same tick.
+    const { data, error } = await supabase.from("integration_connections").select(sel).eq("provider", PROVIDER).eq("active", true);
+    if (error) return json({ error: `could not list connections: ${error.message}` }, 500);
+    conns = (data ?? []) as Conn[];
+  } else {
+    return json({ error: "connection_id or org_id required" }, 400);
+  }
+
+  // ── run ───────────────────────────────────────────────────────────────
+  const results = [];
+  for (const conn of conns) {
+    // A connection mid-backfill keeps backfilling even under the cron's
+    // incremental default, until its history is fully in.
+    const effectiveMode = mode === "backfill" || conn.backfill_done === false ? "backfill" : "incremental";
+    results.push(await syncConnection(supabase, conn, effectiveMode as "backfill" | "incremental", maxDocs));
+  }
+
+  return json({ synced: results.length, results });
 });
