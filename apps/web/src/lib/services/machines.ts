@@ -52,6 +52,7 @@ export async function listProductsForMapping(orgId: number) {
     .select("id, name, sku")
     .eq("org_id", orgId)
     .eq("kind", "finished_good")
+    .eq("active", true)
     .order("name");
   if (error) throw new Error(error.message);
   return data || [];

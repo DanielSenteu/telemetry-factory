@@ -18,7 +18,7 @@ export type StockedProduct = {
 
 export async function listProducts(orgId: number): Promise<StockedProduct[]> {
   const [{ data: products, error: pErr }, { data: stock, error: sErr }] = await Promise.all([
-    supabase.from("products").select("*").eq("org_id", orgId).order("name"),
+    supabase.from("products").select("*").eq("org_id", orgId).eq("active", true).order("name"),
     supabase.from("product_stock").select("*").eq("org_id", orgId),
   ]);
   if (pErr) throw new Error(pErr.message);
@@ -115,4 +115,60 @@ export async function listRecentMovements(orgId: number, productId?: number, lim
   const { data, error } = await q;
   if (error) throw new Error(error.message);
   return (data || []) as unknown as Movement[];
+}
+
+// ── Edit / archive / delete ───────────────────────────
+
+export async function updateProduct(
+  id: number,
+  fields: { name?: string; unit_of_measure?: string; sale_price?: number | null; reorder_point?: number | null },
+) {
+  const { error } = await supabase.from("products").update(fields).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** How many stock movements reference this product — decides delete vs archive. */
+export async function countMovements(productId: number): Promise<number> {
+  const { count, error } = await supabase
+    .from("stock_movements")
+    .select("id", { count: "exact", head: true })
+    .eq("product_id", productId);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+/** Hard delete — ONLY safe when the product has no ledger history (FK cascades). */
+export async function deleteProduct(id: number) {
+  const { error } = await supabase.from("products").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+/** Archive — hides from lists but keeps the product and its ledger intact. */
+export async function archiveProduct(id: number) {
+  const { error } = await supabase.from("products").update({ active: false }).eq("id", id);
+  if (error) throw new Error(error.message);
+}
+
+// ── Manual stock entry ────────────────────────────────
+// Materials don't only arrive by invoice — opening stock, a stock-take
+// correction, or a hand-added bag all go through here as an 'adjustment'
+// movement. A positive quantity carries a unit cost so the weighted-average
+// cost stays right; a negative one is a manual removal.
+
+export async function adjustStockManual(
+  orgId: number,
+  productId: number,
+  quantity: number, // + add, − remove
+  opts: { unitCost?: number | null; note?: string | null } = {},
+) {
+  const { error } = await supabase.from("stock_movements").insert({
+    org_id: orgId,
+    product_id: productId,
+    quantity,
+    movement_type: "adjustment",
+    unit_cost: quantity > 0 ? (opts.unitCost ?? null) : null,
+    source_type: "manual",
+    note: opts.note ?? null,
+  });
+  if (error) throw new Error(error.message);
 }

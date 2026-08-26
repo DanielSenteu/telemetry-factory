@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, field, primaryBtn } from "@/components/app/modal";
 import { listProducts, createProduct, type StockedProduct } from "@/lib/services/inventory";
+import { ProductManageDialog } from "@/components/app/product-manage";
 
 // Materials: what do we have? Raw materials and finished goods, every number
 // derived from the append-only ledger — nothing typed, nothing to drift.
@@ -31,11 +32,11 @@ function stockStatus(p: StockedProduct): { word: string; text: string; ring: str
   return { word: "IN STOCK", text: "text-[var(--accent)]", ring: "", dot: "bg-[var(--accent)]" };
 }
 
-function ProductCard({ p }: { p: StockedProduct }) {
+function ProductCard({ p, onManage }: { p: StockedProduct; onManage: (p: StockedProduct) => void }) {
   const s = stockStatus(p);
   const q = fmtQty(Number(p.on_hand), p.unit_of_measure);
   return (
-    <div className={`gloss rounded-2xl p-5 flex flex-col gap-3 ${s.ring}`}>
+    <button onClick={() => onManage(p)} className={`gloss rounded-2xl p-5 flex flex-col gap-3 text-left w-full hover:ring-1 hover:ring-black/15 transition-shadow ${s.ring}`}>
       <div className="flex items-center gap-2.5">
         <span className={`inline-flex size-2.5 rounded-full ${s.dot}`} />
         <span className="font-display font-bold tracking-tight truncate">{p.name}</span>
@@ -62,11 +63,11 @@ function ProductCard({ p }: { p: StockedProduct }) {
           </span>
         )}
       </div>
-    </div>
+    </button>
   );
 }
 
-function Section({ title, rows }: { title: string; rows: StockedProduct[] }) {
+function Section({ title, rows, onManage }: { title: string; rows: StockedProduct[]; onManage: (p: StockedProduct) => void }) {
   if (rows.length === 0) return null;
   const totalValue = rows.reduce((a, r) => a + Number(r.stock_value || 0), 0);
   return (
@@ -78,7 +79,7 @@ function Section({ title, rows }: { title: string; rows: StockedProduct[] }) {
       </div>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map((p) => (
-          <ProductCard key={p.id} p={p} />
+          <ProductCard key={p.id} p={p} onManage={onManage} />
         ))}
       </div>
     </section>
@@ -89,6 +90,7 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
   const [rows, setRows] = useState<StockedProduct[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const [managing, setManaging] = useState<StockedProduct | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -155,12 +157,15 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
         </div>
       ) : (
         <>
-          <Section title="Finished goods" rows={finished} />
-          <Section title="Raw materials" rows={raw} />
+          <Section title="Finished goods" rows={finished} onManage={setManaging} />
+          <Section title="Raw materials" rows={raw} onManage={setManaging} />
         </>
       )}
 
       {adding && <AddProductDialog orgId={orgId} onClose={() => setAdding(false)} onDone={load} />}
+      {managing && (
+        <ProductManageDialog orgId={orgId} product={managing} onClose={() => setManaging(null)} onDone={load} />
+      )}
     </div>
   );
 }

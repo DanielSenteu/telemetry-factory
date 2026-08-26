@@ -28,6 +28,7 @@ export async function listFinishedGoods(orgId: number): Promise<Product[]> {
     .select("id, name, sku")
     .eq("org_id", orgId)
     .eq("kind", "finished_good")
+    .eq("active", true)
     .order("name");
   if (error) throw new Error(error.message);
   return data || [];
@@ -39,6 +40,7 @@ export async function listRawMaterials(orgId: number): Promise<Product[]> {
     .select("id, name, sku, unit_of_measure, kind")
     .eq("org_id", orgId)
     .in("kind", ["raw_material", "consumable"])
+    .eq("active", true)
     .order("name");
   if (error) throw new Error(error.message);
   return data || [];
