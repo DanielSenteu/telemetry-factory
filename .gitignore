@@ -14,3 +14,6 @@ apps/factory-agent/config.json
 apps/factory-agent/queue/
 
 .DS_Store
+
+# Deno (only used to typecheck edge functions locally)
+deno.lock
