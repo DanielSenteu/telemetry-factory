@@ -36,11 +36,18 @@ function ProductCard({ p, onManage }: { p: StockedProduct; onManage: (p: Stocked
   const s = stockStatus(p);
   const q = fmtQty(Number(p.on_hand), p.unit_of_measure);
   return (
-    <button onClick={() => onManage(p)} className={`gloss rounded-2xl p-5 flex flex-col gap-3 text-left w-full hover:ring-1 hover:ring-black/15 transition-shadow ${s.ring}`}>
+    <div className={`gloss rounded-2xl p-5 flex flex-col gap-3 ${s.ring}`}>
       <div className="flex items-center gap-2.5">
         <span className={`inline-flex size-2.5 rounded-full ${s.dot}`} />
         <span className="font-display font-bold tracking-tight truncate">{p.name}</span>
-        <span className={`ml-auto font-mono text-[11px] font-bold tracking-widest ${s.text}`}>{s.word}</span>
+        <span className={`font-mono text-[11px] font-bold tracking-widest ${s.text}`}>{s.word}</span>
+        <button
+          onClick={() => onManage(p)}
+          aria-label={`Manage ${p.name}`}
+          className="ml-auto -mr-1.5 -my-1 size-8 shrink-0 rounded-lg text-black/40 hover:text-black hover:bg-black/5 flex items-center justify-center transition-colors"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+        </button>
       </div>
       <div className="flex items-baseline gap-2">
         <span className={`font-mono text-4xl font-semibold tabular-nums leading-none ${Number(p.on_hand) < 0 ? "text-red-600" : ""}`}>
@@ -63,7 +70,7 @@ function ProductCard({ p, onManage }: { p: StockedProduct; onManage: (p: Stocked
           </span>
         )}
       </div>
-    </button>
+    </div>
   );
 }
 
