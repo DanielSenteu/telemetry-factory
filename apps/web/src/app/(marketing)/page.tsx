@@ -21,13 +21,15 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={0.1}>
             <h1 className="font-display text-5xl md:text-6xl font-bold tracking-tight leading-[1.05]">
-              Your factory floor, live on one screen.
+              Your entire factory floor, transparent on one screen.
             </h1>
           </Reveal>
           <Reveal delay={0.2}>
             <p className="text-lg text-black/60 leading-relaxed max-w-lg">
-              Industrial-Sync wires into your moulding machines and shows you — shot by
-              shot — what is running, what is in stock, and what to make next.
+              Industrial-Sync integrates directly into your injection moulding and PLC
+              machine controllers to eliminate shop-floor data leaks. Management gets
+              real-time, tamper-proof tracking — shot by shot — of exact production
+              yields, live material deductions, and automated energy costs.
             </p>
           </Reveal>
           <Reveal delay={0.3} className="flex items-center gap-5 pt-2">
@@ -51,7 +53,7 @@ export default function HomePage() {
           </div>
           <div>
             <div className="font-mono text-3xl font-semibold"><Counter target={15} suffix="+" duration={1.1} /></div>
-            <div className="mt-1 text-sm text-black/50">parameters read per machine: shots, scrap, cycle time, mould, alarms, energy</div>
+            <div className="mt-1 text-sm text-black/50">industrial parameters extracted continuously — real-time OEE, material scrap variances, mechanical alarms, and Specific Energy Consumption (SEC) per part</div>
           </div>
           <div>
             <div className="font-mono text-3xl font-semibold"><Counter target={0} /></div>
@@ -73,12 +75,13 @@ export default function HomePage() {
           product goes out. Most software watches one piece. Industrial-Sync watches the
           whole loop — so the numbers finally agree with the floor.
         </p>
-        <div className="mt-10 grid md:grid-cols-4 gap-4">
+        <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
-            ["01", "Material arrives", "Photograph the supplier invoice. Industrial-Sync reads it and books the polypropylene into stock — at what it actually cost."],
-            ["02", "Machines convert it", "Every shot is counted from the machine's own controller. Each product's recipe deducts the exact grams of material used."],
-            ["03", "Product ships out", "Sales flow in from your invoicing system and deduct finished goods. The shelf count is real, not remembered."],
-            ["04", "You decide what's next", "Demand, stock cover, machine hours and material sufficiency in one row — before the heaters are warm."],
+            ["01", "Material Tracking & Verification", "Instantly log supplier invoices. Industrial-Sync automatically inputs raw polypropylene into your digital ledger at true cost, creating an air-tight line of sight from the warehouse to the machine barrel to stop material shrinkage."],
+            ["02", "Precision Production Conversion", "Every single shot is extracted directly from the machine's native PLC brain. The system maps your exact product recipes against physical machine cycles, catching material waste, faked numbers, and floor leakage instantly."],
+            ["03", "Sales & Demand Sync", "Sales flow in from your invoicing system and deduct finished goods automatically. The shelf count is real, not remembered — and three years of demand history stands behind every decision."],
+            ["04", "Command & Capital Allocation", "Demand, stock cover, machine hours and material sufficiency in one row — so capital goes where the numbers say, before the heaters are warm."],
+            ["05", "Net-Zero & Tariff Optimization", "Industrial-Sync continuously converts raw machine kilowatt-hour (kWh) draw into live CO₂-equivalent (CO₂e) metrics. The platform maps your Specific Energy Consumption (SEC) per part natively, advising management on the most efficient times to run production to exploit off-peak tariffs — while keeping your facility instantly audit-ready for EPRA and UN Global Compact ESG reporting."],
           ].map(([n, t, d]) => (
             <div key={n} className="gloss rounded-2xl p-6">
               <div className="font-mono text-sm text-[var(--accent)] font-semibold">{n}</div>
@@ -94,13 +97,14 @@ export default function HomePage() {
       <section className="bg-[var(--ink)] text-white">
         <RevealInView className="mx-auto max-w-6xl px-6 py-20 grid md:grid-cols-2 gap-12 items-center">
           <div>
-            <h2 className="font-display text-4xl font-bold tracking-tight">Built where the power cuts.</h2>
+            <h2 className="font-display text-4xl font-bold tracking-tight">Engineered for East African infrastructure.</h2>
             <p className="mt-4 text-white/60 text-lg leading-relaxed">
-              Industrial-Sync was built on a working factory floor in Nairobi, not in a
-              demo lab. That shows in the details: when the power comes back
-              before the internet does, your machines run and your data waits at
-              the factory — then catches up on its own, in order, with nothing
-              lost and nothing counted twice.
+              Industrial-Sync was built directly inside operational factory floors in
+              Nairobi, not in an isolated laboratory. The platform is hardened against
+              local grid instability: when a power outage hits, your data queues safely
+              on-site at the machine hardware layer. The moment power returns, the
+              system automatically synchronizes the backlog — zero data corruption,
+              zero duplication, absolute continuity.
             </p>
             <p className="mt-4 text-white/60 text-lg leading-relaxed">
               And when production happens that no system saw — an outage, a
