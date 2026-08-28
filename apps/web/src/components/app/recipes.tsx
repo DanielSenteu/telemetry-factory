@@ -79,7 +79,9 @@ export function Recipes({ orgId }: { orgId: number }) {
     setSaving("line");
     setError(null);
     try {
-      await upsertBOMLine(orgId, productId, Number(componentId), Number(qty), "g");
+      const selectedMat = materials.find((m) => m.id === Number(componentId));
+      const uom = selectedMat?.unit_of_measure || "unit";
+      await upsertBOMLine(orgId, productId, Number(componentId), Number(qty), uom);
       setComponentId("");
       setQty("");
       await loadBom(productId);
@@ -187,8 +189,10 @@ export function Recipes({ orgId }: { orgId: number }) {
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1.5 w-36">
-                <span className="text-sm font-medium text-black/70">Grams per unit</span>
+              <label className="flex flex-col gap-1.5 w-40">
+                <span className="text-sm font-medium text-black/70">
+                  {(materials.find((m) => m.id === Number(componentId))?.unit_of_measure || "Amount")} per unit
+                </span>
                 <input type="number" inputMode="decimal" className={field + " font-mono"} value={qty} onChange={(e) => setQty(e.target.value)} />
               </label>
               <button
