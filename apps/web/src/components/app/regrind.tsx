@@ -8,10 +8,10 @@ import { getRegrindBalances, postRegrindUse, type RegrindBalance } from "@/lib/s
 // Runners accumulate automatically; grinding them and loading them back is
 // the one manual step, logged here.
 
-function kg(g: number) {
-  const n = Number(g);
-  if (Math.abs(n) >= 1000) return { value: (n / 1000).toLocaleString(undefined, { maximumFractionDigits: 2 }), unit: "kg" };
-  return { value: n.toLocaleString(undefined, { maximumFractionDigits: 0 }), unit: "g" };
+// Amount in the material's OWN unit — no g/kg conversion. The regrind pool
+// and raw-material stock share one unit per material, so the number posts 1:1.
+function amt(v: number) {
+  return Number(v).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 export function Regrind({ orgId }: { orgId: number }) {
@@ -74,7 +74,7 @@ export function Regrind({ orgId }: { orgId: number }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => {
-            const bal = kg(Number(r.balance_g));
+            const u = r.unit_of_measure;
             const empty = Number(r.balance_g) <= 0;
             return (
               <div key={r.material_product_id} className={`gloss rounded-2xl p-5 flex flex-col gap-3 ${empty ? "opacity-70" : ""}`}>
@@ -86,15 +86,15 @@ export function Regrind({ orgId }: { orgId: number }) {
                   </span>
                 </div>
                 <div className="flex items-baseline gap-2">
-                  <span className="font-mono text-4xl font-semibold tabular-nums leading-none">{bal.value}</span>
-                  <span className="text-sm text-black/45">{bal.unit} in the pool</span>
+                  <span className="font-mono text-4xl font-semibold tabular-nums leading-none">{amt(Number(r.balance_g))}</span>
+                  <span className="text-sm text-black/45">{u} in the pool</span>
                 </div>
                 <div className="flex flex-wrap gap-2 text-xs font-mono text-black/55">
                   <span className="rounded-lg bg-black/[0.045] px-2.5 py-1.5">
-                    {kg(Number(r.total_in_g)).value} {kg(Number(r.total_in_g)).unit} recovered
+                    {amt(Number(r.total_in_g))} {u} recovered
                   </span>
                   <span className="rounded-lg bg-black/[0.045] px-2.5 py-1.5">
-                    {kg(Number(r.total_out_g)).value} {kg(Number(r.total_out_g)).unit} returned
+                    {amt(Number(r.total_out_g))} {u} returned
                   </span>
                 </div>
               </div>
@@ -122,21 +122,21 @@ function LogUseDialog({
   onDone: () => void;
 }) {
   const [materialId, setMaterialId] = useState(balances.length === 1 ? String(balances[0].material_product_id) : "");
-  const [grams, setGrams] = useState("");
+  const [qty, setQty] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = balances.find((b) => String(b.material_product_id) === materialId);
-  const g = Number(grams) || 0;
-  const over = selected && g > Number(selected.balance_g);
+  const q = Number(qty) || 0;
+  const over = selected && q > Number(selected.balance_g);
 
   const submit = async () => {
-    if (!materialId || g <= 0) return;
+    if (!materialId || q <= 0) return;
     setBusy(true);
     setError(null);
     try {
-      await postRegrindUse(orgId, Number(materialId), g, note || null);
+      await postRegrindUse(orgId, Number(materialId), q, note || null);
       onDone();
       onClose();
     } catch (e) {
@@ -150,7 +150,7 @@ function LogUseDialog({
     <Modal open onClose={onClose} title="Log regrind use">
       <div className="flex flex-col gap-4">
         <p className="text-sm text-black/55">
-          The grams you log leave the pool and return to raw material stock — ready for recipes to consume.
+          The amount you log leaves the pool and returns to raw material stock — ready for recipes to consume.
         </p>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-black/70">Material</span>
@@ -158,15 +158,16 @@ function LogUseDialog({
             <option value="">Choose…</option>
             {balances.map((b) => (
               <option key={b.material_product_id} value={b.material_product_id}>
-                {b.material_name} — {kg(Number(b.balance_g)).value} {kg(Number(b.balance_g)).unit} available
+                {b.material_name} — {amt(Number(b.balance_g))} {b.unit_of_measure} available
               </option>
             ))}
           </select>
         </label>
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-black/70">Grams loaded back</span>
-          <input type="number" inputMode="numeric" className={field + " font-mono"} value={grams} onChange={(e) => setGrams(e.target.value)} />
-          {g >= 1000 && <span className="text-xs font-mono text-black/45">= {(g / 1000).toFixed(2)} kg</span>}
+          <span className="text-sm font-medium text-black/70">
+            Amount loaded back{selected ? ` (${selected.unit_of_measure})` : ""}
+          </span>
+          <input type="number" inputMode="decimal" className={field + " font-mono"} value={qty} onChange={(e) => setQty(e.target.value)} />
         </label>
         {over && (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -178,8 +179,8 @@ function LogUseDialog({
           <input className={field} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. ground Friday's runners" />
         </label>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        <button className={primaryBtn} disabled={busy || !materialId || g <= 0} onClick={submit}>
-          {busy ? "Logging…" : g > 0 ? `Return ${kg(g).value} ${kg(g).unit} to stock` : "Return to stock"}
+        <button className={primaryBtn} disabled={busy || !materialId || q <= 0} onClick={submit}>
+          {busy ? "Logging…" : selected && q > 0 ? `Return ${amt(q)} ${selected.unit_of_measure} to stock` : "Return to stock"}
         </button>
       </div>
     </Modal>

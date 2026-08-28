@@ -72,12 +72,22 @@ export type RegrindBalance = {
   balance_g: number;
   total_in_g: number;
   total_out_g: number;
+  // The material's own unit. Regrind values are carried in this unit — one
+  // material, one unit, no conversions (a kg material's pool is in kg).
+  unit_of_measure: string;
 };
 
 export async function getRegrindBalances(orgId: number): Promise<RegrindBalance[]> {
-  const { data, error } = await supabase.rpc("regrind_balances", { p_org_id: orgId });
+  const [{ data, error }, { data: products }] = await Promise.all([
+    supabase.rpc("regrind_balances", { p_org_id: orgId }),
+    supabase.from("products").select("id, unit_of_measure").eq("org_id", orgId),
+  ]);
   if (error) throw new Error(error.message);
-  return data || [];
+  const unitById = new Map((products || []).map((p) => [p.id, p.unit_of_measure]));
+  return (data || []).map((r: Omit<RegrindBalance, "unit_of_measure">) => ({
+    ...r,
+    unit_of_measure: unitById.get(r.material_product_id) ?? "g",
+  }));
 }
 
 export async function postRegrindUse(orgId: number, materialProductId: number, qtyG: number, note: string | null) {
