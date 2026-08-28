@@ -26,7 +26,90 @@ export type MachineRow = {
   today_scrap: number;
   recent_shots: number;
   alarms: { state: number; ids: string[] } | null;
+  // Returned by the snapshot RPC; optional so fixtures stay minimal.
+  mac?: string | null;
+  ip?: string | null;
+  heat_state?: number | null;
+  plan_count?: number | null;
+  shot_count?: number | null;
+  material?: string | null;
 };
+
+// ── Machine profiles ──────────────────────────────────────
+// What one count MEANS differs per machine kind; the profile registry lives
+// in code, never in per-customer config (CONVENTIONS rule 8). Per-machine
+// config is parameters only (cavity override, mappings), never meaning.
+
+export type MachineProfile = {
+  kind: "shots" | "actions" | "monitor";
+  /** Label under the big number on the card. */
+  countNoun: string;
+  /** Whether shots × cavities applies (injection molding). */
+  usesCavities: boolean;
+  /** One-sentence interpretation, shown in the inspector. */
+  reads: string;
+};
+
+export function machineProfile(machineType: string | null | undefined): MachineProfile {
+  switch ((machineType || "").toLowerCase()) {
+    case "":
+    case "injection":
+      return {
+        kind: "shots",
+        countNoun: "good parts",
+        usesCavities: true,
+        reads: "Counts shots — every cycle fills the mould once. Parts = shots × cavities.",
+      };
+    case "wrapping":
+      return {
+        kind: "actions",
+        countNoun: "wrapped",
+        usesCavities: false,
+        reads: "Each count is one finished unit, straight off the machine. No cavities involved.",
+      };
+    case "monitor":
+      return {
+        kind: "monitor",
+        countNoun: "",
+        usesCavities: false,
+        reads: "Reports state only — output is recorded manually.",
+      };
+    default:
+      return {
+        kind: "actions",
+        countNoun: "units",
+        usesCavities: false,
+        reads: "Each count is one finished unit, straight off the machine.",
+      };
+  }
+}
+
+// ── Cavity verdict ────────────────────────────────────────
+// Three opinions can exist: the controller panel (reported per reading), the
+// recipe's mould setup, and an admin override on the craft mapping. The
+// override wins, then the controller, then 1. A recipe that disagrees with
+// the value in use is a mismatch worth flagging — parts counting and material
+// balance would be using different mould geometries.
+
+export type CavityVerdict = {
+  value: number;
+  source: "override" | "controller" | "default";
+  recipe: number | null;
+  mismatch: boolean;
+};
+
+export function effectiveCavity(
+  controller: number | null | undefined,
+  override: number | null | undefined,
+  recipe: number | null | undefined
+): CavityVerdict {
+  const value =
+    override != null && override > 0 ? override : controller != null && controller > 0 ? controller : 1;
+  const source =
+    override != null && override > 0 ? "override" : controller != null && controller > 0 ? "controller" : "default";
+  const rec = recipe != null && recipe > 0 ? recipe : null;
+  return { value, source, recipe: rec, mismatch: rec != null && rec !== value };
+}
 
 export type FactoryAgent = { id: number; name: string; last_seen_at: string | null; active: boolean };
 

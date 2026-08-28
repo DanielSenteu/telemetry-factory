@@ -46,6 +46,107 @@ export async function mapMachineCraft(orgId: number, machineId: number, craftId:
   if (error) throw new Error(error.message);
 }
 
+// ── Inspector ─────────────────────────────────────────────
+
+export type MachineMapping = {
+  craft_id: string;
+  product_id: number;
+  cavity_override: number | null;
+  product_name: string | null;
+  recipe_cavities: number | null;
+};
+
+export type MachineInspectorData = {
+  /** The machine-specific extras (`values` JSONB) from the latest reading. */
+  extraValues: Record<string, number | string | boolean | null> | null;
+  extraValuesAt: string | null;
+  mappings: MachineMapping[];
+};
+
+/** Per-machine cavity knowledge for the cards: override + recipe cavities,
+ *  keyed "machineId:craftId". One org-wide fetch per dashboard load. */
+export type CavityInfo = { override: number | null; recipe: number | null };
+
+export async function getCavityInfo(orgId: number): Promise<Map<string, CavityInfo>> {
+  const { data: maps, error } = await supabase
+    .from("machine_product_map")
+    .select("machine_id, craft_id, product_id, cavity_override")
+    .eq("org_id", orgId);
+  if (error) throw new Error(error.message);
+  const rows = maps || [];
+  const productIds = [...new Set(rows.map((m) => m.product_id))];
+  const recipeByProduct = new Map<number, number>();
+  if (productIds.length) {
+    const { data: boms, error: bomErr } = await supabase
+      .from("boms")
+      .select("product_id, cavities")
+      .eq("org_id", orgId)
+      .eq("active", true)
+      .in("product_id", productIds);
+    if (bomErr) throw new Error(bomErr.message);
+    for (const b of boms || []) {
+      if (b.cavities != null) recipeByProduct.set(b.product_id, b.cavities);
+    }
+  }
+  return new Map(
+    rows.map((m) => [
+      `${m.machine_id}:${m.craft_id}`,
+      { override: m.cavity_override, recipe: recipeByProduct.get(m.product_id) ?? null },
+    ])
+  );
+}
+
+export async function getMachineInspectorData(orgId: number, machineId: number): Promise<MachineInspectorData> {
+  const [reading, maps] = await Promise.all([
+    supabase
+      .from("machine_readings")
+      .select("observed_at, values")
+      .eq("machine_id", machineId)
+      .order("observed_at", { ascending: false })
+      .limit(1),
+    supabase
+      .from("machine_product_map")
+      .select("craft_id, product_id, cavity_override, products(name)")
+      .eq("org_id", orgId)
+      .eq("machine_id", machineId),
+  ]);
+  if (reading.error) throw new Error(reading.error.message);
+  if (maps.error) throw new Error(maps.error.message);
+
+  const mapRows = maps.data || [];
+  const productIds = [...new Set(mapRows.map((m) => m.product_id))];
+  const recipeByProduct = new Map<number, number>();
+  if (productIds.length) {
+    const { data: boms, error: bomErr } = await supabase
+      .from("boms")
+      .select("product_id, cavities")
+      .eq("org_id", orgId)
+      .eq("active", true)
+      .in("product_id", productIds);
+    if (bomErr) throw new Error(bomErr.message);
+    for (const b of boms || []) {
+      if (b.cavities != null) recipeByProduct.set(b.product_id, b.cavities);
+    }
+  }
+
+  const latest = reading.data?.[0];
+  return {
+    extraValues: (latest?.values as MachineInspectorData["extraValues"]) ?? null,
+    extraValuesAt: latest?.observed_at ?? null,
+    mappings: mapRows.map((m) => {
+      // supabase-js types the FK embed loosely; at runtime a to-one embed is an object.
+      const prod = m.products as unknown as { name: string } | { name: string }[] | null;
+      return {
+        craft_id: m.craft_id,
+        product_id: m.product_id,
+        cavity_override: m.cavity_override,
+        product_name: (Array.isArray(prod) ? prod[0]?.name : prod?.name) ?? null,
+        recipe_cavities: recipeByProduct.get(m.product_id) ?? null,
+      };
+    }),
+  };
+}
+
 export async function listProductsForMapping(orgId: number) {
   const { data, error } = await supabase
     .from("products")

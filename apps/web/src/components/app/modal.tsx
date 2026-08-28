@@ -7,11 +7,13 @@ export function Modal({
   onClose,
   title,
   children,
+  wide = false,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  wide?: boolean;
 }) {
   return (
     <AnimatePresence>
@@ -28,7 +30,7 @@ export function Modal({
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 24, opacity: 0 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="relative gloss rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[88vh] overflow-y-auto p-6"
+            className={`relative gloss rounded-t-2xl sm:rounded-2xl w-full ${wide ? "sm:max-w-2xl" : "sm:max-w-md"} max-h-[88vh] overflow-y-auto p-6`}
           >
             <div className="flex items-center justify-between gap-4 mb-4">
               <h2 className="font-display text-xl font-bold">{title}</h2>

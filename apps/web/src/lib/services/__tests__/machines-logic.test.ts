@@ -6,6 +6,8 @@ import {
   nairobiDateString,
   nairobiPresetRange,
   eatRangeToUtc,
+  machineProfile,
+  effectiveCavity,
   OFFLINE_AFTER_MS,
   type MachineRow,
 } from "../machines-logic";
@@ -103,5 +105,46 @@ describe("Nairobi time (UTC+3) — the boundaries that misfiled v1 production", 
       since: "2026-07-05T21:00:00.000Z",
       until: "2026-07-06T21:00:00.000Z",
     });
+  });
+});
+
+describe("machineProfile — what one count means", () => {
+  it("null / injection machines count shots and use cavities", () => {
+    expect(machineProfile(null).kind).toBe("shots");
+    expect(machineProfile("injection").usesCavities).toBe(true);
+  });
+  it("wrapping machines count finished units directly", () => {
+    const p = machineProfile("wrapping");
+    expect(p.kind).toBe("actions");
+    expect(p.countNoun).toBe("wrapped");
+    expect(p.usesCavities).toBe(false);
+  });
+  it("monitor-only machines count nothing", () => {
+    expect(machineProfile("monitor").kind).toBe("monitor");
+  });
+  it("an unknown type is an action machine, never a molder by accident", () => {
+    const p = machineProfile("laser-cutter");
+    expect(p.kind).toBe("actions");
+    expect(p.usesCavities).toBe(false);
+  });
+});
+
+describe("effectiveCavity — three opinions, one winner", () => {
+  it("controller value wins when it is the only opinion", () => {
+    expect(effectiveCavity(8, null, null)).toEqual({ value: 8, source: "controller", recipe: null, mismatch: false });
+  });
+  it("unset / zero controller falls back to 1 (the invisible-wrong-count case)", () => {
+    expect(effectiveCavity(null, null, null).value).toBe(1);
+    expect(effectiveCavity(0, null, null)).toMatchObject({ value: 1, source: "default" });
+  });
+  it("override beats the controller", () => {
+    expect(effectiveCavity(1, 12, 12)).toMatchObject({ value: 12, source: "override", mismatch: false });
+  });
+  it("recipe disagreement is flagged, whoever is winning", () => {
+    expect(effectiveCavity(1, null, 12)).toMatchObject({ value: 1, mismatch: true, recipe: 12 });
+    expect(effectiveCavity(12, null, 12).mismatch).toBe(false);
+  });
+  it("a zero/negative recipe is treated as unset, not as a mismatch", () => {
+    expect(effectiveCavity(8, null, 0).mismatch).toBe(false);
   });
 });

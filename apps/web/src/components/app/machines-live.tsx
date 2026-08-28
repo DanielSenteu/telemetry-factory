@@ -6,16 +6,21 @@ import {
   RecordEventDialog,
   MapCraftDialog,
 } from "@/components/app/production-dialogs";
+import { MachineInspector } from "@/components/app/machine-inspector";
 import {
   getMachineDashboard,
   listFactoryAgents,
+  getCavityInfo,
   deriveMachineState,
+  machineProfile,
+  effectiveCavity,
   goodParts,
   agentIsStale,
   nairobiPresetRange,
   formatNairobi,
   type MachineRow,
   type FactoryAgent,
+  type CavityInfo,
 } from "@/lib/services/machines";
 
 // The floor, live. One question, answered in the first second: is it running?
@@ -37,20 +42,29 @@ const STATE_STYLE: Record<string, { word: string; text: string; ring: string; le
 function MachineCard({
   row,
   nowMs,
+  cavityInfo,
   onConfirm,
   onMap,
+  onInspect,
 }: {
   row: MachineRow;
   nowMs: number;
+  cavityInfo: CavityInfo | null;
   onConfirm: (row: MachineRow) => void;
   onMap: (row: MachineRow) => void;
+  onInspect: (row: MachineRow) => void;
 }) {
   const state = deriveMachineState(row, nowMs);
   const s = STATE_STYLE[state];
+  const profile = machineProfile(row.machine_type);
+  const verdict = effectiveCavity(row.mold_cavity, cavityInfo?.override, cavityInfo?.recipe);
   const job = row.product_name ?? (row.craft_id ? `Job ${row.craft_id}` : null);
 
   return (
-    <div className={`gloss rounded-2xl p-5 flex flex-col gap-3 ${s.ring}`}>
+    <div
+      onClick={() => onInspect(row)}
+      className={`gloss rounded-2xl p-5 flex flex-col gap-3 cursor-pointer ${s.ring}`}
+    >
       <div className="flex items-center gap-2.5">
         <span className="relative flex size-3">
           {state === "running" && (
@@ -60,13 +74,20 @@ function MachineCard({
         </span>
         <span className="font-display font-bold text-lg tracking-tight">{row.name}</span>
         <span className={`ml-auto font-mono text-xs font-bold tracking-widest ${s.text}`}>{s.word}</span>
+        <button
+          onClick={(e) => { e.stopPropagation(); onInspect(row); }}
+          aria-label={`Inspect ${row.name}`}
+          className="size-9 -my-1.5 -mr-1.5 rounded-lg text-black/40 hover:bg-black/5 hover:text-black/70 transition-colors text-lg leading-none"
+        >
+          ⋯
+        </button>
       </div>
 
       <div className="text-sm font-medium text-black/70 min-h-5">
         {job ?? <span className="text-black/40">No job</span>}
         {!row.product_name && row.craft_id && (
           <button
-            onClick={() => onMap(row)}
+            onClick={(e) => { e.stopPropagation(); onMap(row); }}
             className="ml-2 text-[11px] font-mono font-semibold text-amber-700 bg-amber-100 hover:bg-amber-200 rounded px-2 py-1 transition-colors"
           >
             unmapped — link it
@@ -74,18 +95,38 @@ function MachineCard({
         )}
       </div>
 
-      <div className="flex items-baseline gap-2">
-        <span className="font-mono text-4xl md:text-[2.6rem] font-semibold tabular-nums leading-none">
-          {goodParts(row).toLocaleString()}
-        </span>
-        <span className="text-sm text-black/45">good parts</span>
-      </div>
+      {profile.kind !== "monitor" && (
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-4xl md:text-[2.6rem] font-semibold tabular-nums leading-none">
+            {goodParts(row).toLocaleString()}
+          </span>
+          <span className="text-sm text-black/45">{profile.countNoun}</span>
+        </div>
+      )}
 
       <div className="flex flex-wrap gap-2 text-xs font-mono text-black/55">
+        {profile.usesCavities && (
+          <span
+            className={`rounded-lg px-2.5 py-1.5 ${
+              verdict.mismatch
+                ? "bg-amber-100 text-amber-800 font-semibold"
+                : "bg-black/[0.045]"
+            }`}
+            title={
+              verdict.mismatch
+                ? `Recipe says ${verdict.recipe} cavities — counting uses ${verdict.value}`
+                : `Cavity count from the ${verdict.source === "default" ? "1-cavity default" : verdict.source}`
+            }
+          >
+            × {verdict.value} cav{verdict.mismatch ? " ⚠" : ""}
+          </span>
+        )}
         {row.cycle_time != null && (
           <span className="rounded-lg bg-black/[0.045] px-2.5 py-1.5">{Number(row.cycle_time).toFixed(1)}s cycle</span>
         )}
-        <span className="rounded-lg bg-black/[0.045] px-2.5 py-1.5">{Math.round(row.today_scrap).toLocaleString()} scrap</span>
+        {profile.kind === "shots" && (
+          <span className="rounded-lg bg-black/[0.045] px-2.5 py-1.5">{Math.round(row.today_scrap).toLocaleString()} scrap</span>
+        )}
         {row.power_kwh != null && (
           <span className="rounded-lg bg-black/[0.045] px-2.5 py-1.5">{Number(row.power_kwh).toFixed(1)} kWh</span>
         )}
@@ -98,7 +139,7 @@ function MachineCard({
       </div>
       {row.product_id != null && goodParts(row) > 0 && (
         <button
-          onClick={() => onConfirm(row)}
+          onClick={(e) => { e.stopPropagation(); onConfirm(row); }}
           className="mt-1 h-11 rounded-lg border border-black/10 text-sm font-semibold hover:bg-black/[0.04] transition-colors"
         >
           Confirm today&apos;s output
@@ -112,19 +153,26 @@ export function MachinesLive({ orgId }: { orgId: number }) {
   const [preset, setPreset] = useState<(typeof PRESETS)[number]["key"]>("today");
   const [rows, setRows] = useState<MachineRow[] | null>(null);
   const [agents, setAgents] = useState<FactoryAgent[]>([]);
+  const [cavities, setCavities] = useState<Map<string, CavityInfo>>(new Map());
   const [error, setError] = useState<string | null>(null);
   const [updatedAt, setUpdatedAt] = useState<number | null>(null);
   const [confirming, setConfirming] = useState<MachineRow | null>(null);
   const [mapping, setMapping] = useState<MachineRow | null>(null);
+  const [inspecting, setInspecting] = useState<MachineRow | null>(null);
   const [recording, setRecording] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const load = useCallback(async () => {
     try {
       const { from, to } = nairobiPresetRange(preset);
-      const [m, a] = await Promise.all([getMachineDashboard(orgId, from, to), listFactoryAgents(orgId)]);
+      const [m, a, c] = await Promise.all([
+        getMachineDashboard(orgId, from, to),
+        listFactoryAgents(orgId),
+        getCavityInfo(orgId),
+      ]);
       setRows(m);
       setAgents(a);
+      setCavities(c);
       setUpdatedAt(Date.now());
       setError(null);
     } catch (e) {
@@ -209,7 +257,15 @@ export function MachinesLive({ orgId }: { orgId: number }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {rows.map((r) => (
-            <MachineCard key={r.machine_id} row={r} nowMs={nowMs} onConfirm={setConfirming} onMap={setMapping} />
+            <MachineCard
+              key={r.machine_id}
+              row={r}
+              nowMs={nowMs}
+              cavityInfo={r.craft_id ? cavities.get(`${r.machine_id}:${r.craft_id}`) ?? null : null}
+              onConfirm={setConfirming}
+              onMap={setMapping}
+              onInspect={setInspecting}
+            />
           ))}
         </div>
       )}
@@ -231,6 +287,15 @@ export function MachinesLive({ orgId }: { orgId: number }) {
       )}
       {recording && (
         <RecordEventDialog orgId={orgId} open onClose={() => setRecording(false)} onDone={load} />
+      )}
+      {inspecting && (
+        <MachineInspector
+          orgId={orgId}
+          // Follow the 20s refresh while open, instead of freezing the reading at open time.
+          row={rows?.find((r) => r.machine_id === inspecting.machine_id) ?? inspecting}
+          nowMs={nowMs}
+          onClose={() => setInspecting(null)}
+        />
       )}
     </div>
   );
