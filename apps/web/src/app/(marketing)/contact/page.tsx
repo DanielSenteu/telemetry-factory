@@ -2,11 +2,13 @@ export default function ContactPage() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-20 grid md:grid-cols-2 gap-14">
       <div>
-        <h1 className="font-display text-5xl font-bold tracking-tight">Book a factory visit.</h1>
+        <h1 className="font-display text-5xl font-bold tracking-tight">Book a virtual demo.</h1>
         <p className="mt-4 text-lg text-black/55 leading-relaxed">
-          Tell us a little about your factory and we will call you to arrange a
-          visit. A technician walks your floor, looks at your machines, and you
-          get a straight answer on what wiring in takes.
+          Leave your details and we will set up an online meeting. We explain
+          what Industrial-Sync does and show you the platform live — a real
+          factory floor running on it, in real time, machines counting as we
+          speak. If it fits your operation, we arrange a factory visit from
+          there.
         </p>
         <div className="mt-8 flex flex-col gap-3">
           <div className="gloss rounded-xl px-5 py-4 flex items-center gap-4">
@@ -36,11 +38,11 @@ export default function ContactPage() {
             </label>
           ))}
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-black/70">What do you mould?</span>
-            <textarea rows={3} className="rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-black/30" placeholder="e.g. medical containers, caps, household goods…" />
+            <span className="text-sm font-medium text-black/70">What do you manufacture?</span>
+            <textarea rows={3} className="rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-black/30" placeholder="e.g. medical containers, caps, packaging, household goods…" />
           </label>
           <button className="h-12 rounded-lg bg-[var(--ink)] text-white font-medium hover:bg-black transition-colors">
-            Request a visit
+            Book my demo
           </button>
           <p className="text-xs text-black/40 text-center">We reply within one working day.</p>
         </div>

@@ -16,7 +16,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-6">
           <Reveal delay={0}>
             <div className="font-mono text-sm text-[var(--accent)] font-semibold tracking-wider">
-              FOR INJECTION MOULDING FACTORIES
+              FOR MANUFACTURING FACTORIES
             </div>
           </Reveal>
           <Reveal delay={0.1}>
@@ -26,14 +26,18 @@ export default function HomePage() {
           </Reveal>
           <Reveal delay={0.2}>
             <p className="text-lg text-black/60 leading-relaxed max-w-lg">
-              Industrial-Sync integrates directly into your injection moulding and PLC
-              machine controllers to eliminate shop-floor data leaks. Management gets
+              Industrial-Sync integrates directly into your machinery controllers —
+              modern systems such as Delta and Techmation, or any legacy factory PLC
+              setup — retrieving key parameters natively from the machines. Powered by
+              stable IIoT connectivity, our platform bridges the physical-to-digital
+              divide to eliminate shop-floor data leaks completely. Management gets
               real-time, tamper-proof tracking — shot by shot — of exact production
-              yields, live material deductions, and automated energy costs.
+              yields, live material deductions, and automated energy costs,
+              transforming fragmented operations into a clear, unified business ledger.
             </p>
           </Reveal>
           <Reveal delay={0.3} className="flex items-center gap-5 pt-2">
-            <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black text-base h-12 px-7" render={<Link href="/contact" />}>Book a factory visit</Button>
+            <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black text-base h-12 px-7" render={<Link href="/contact" />}>Book a virtual demo</Button>
             <span className="text-sm text-black/50">
               or call <span className="font-mono font-semibold text-black/80">[YOUR PHONE]</span>
             </span>
@@ -123,11 +127,13 @@ export default function HomePage() {
           See your own machines on this screen.
         </h2>
         <p className="text-lg text-black/55 max-w-xl">
-          A technician visits your factory, looks at your machines, and tells you
-          exactly what wiring in would take. No obligation.
+          Our engineering team visits your facility, maps your current production
+          lines, and delivers a tailored deployment blueprint to eliminate
+          operational blind spots. No factory downtime, no complicated changes,
+          and at absolutely no obligation.
         </p>
         <div className="flex items-center gap-5">
-          <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black text-base h-12 px-7" render={<Link href="/contact" />}>Book a factory visit</Button>
+          <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black text-base h-12 px-7" render={<Link href="/contact" />}>Book a virtual demo</Button>
           <Link href="/product" className="text-sm font-medium text-black/60 hover:text-black">
             or read what you get →
           </Link>

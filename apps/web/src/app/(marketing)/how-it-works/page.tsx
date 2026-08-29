@@ -54,7 +54,7 @@ export default function HowItWorksPage() {
 
       <section className="mx-auto max-w-6xl px-6 py-20 text-center flex flex-col items-center gap-5">
         <h2 className="font-display text-3xl font-bold">The visit is the first step.</h2>
-        <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black h-12 px-7" render={<Link href="/contact" />}>Book a factory visit</Button>
+        <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black h-12 px-7" render={<Link href="/contact" />}>Book a virtual demo</Button>
       </section>
     </>
   );
