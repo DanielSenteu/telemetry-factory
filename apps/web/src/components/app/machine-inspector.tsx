@@ -13,6 +13,7 @@ import {
   clearCountAction,
   postCountAction,
   listConsumables,
+  mapMachineCraft,
   type MachineRow,
   type MachineInspectorData,
   type CountAction,
@@ -225,14 +226,21 @@ export function MachineInspector({
 }) {
   const [data, setData] = useState<MachineInspectorData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [settingOverride, setSettingOverride] = useState(false);
+
+  const load = useCallback(async () => {
+    try {
+      setData(await getMachineInspectorData(orgId, row.machine_id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [orgId, row.machine_id]);
 
   useEffect(() => {
     let gone = false;
-    getMachineInspectorData(orgId, row.machine_id)
-      .then((d) => { if (!gone) setData(d); })
-      .catch((e) => { if (!gone) setError(e instanceof Error ? e.message : String(e)); });
+    Promise.resolve().then(() => { if (!gone) load(); });
     return () => { gone = true; };
-  }, [orgId, row.machine_id]);
+  }, [load]);
 
   const profile = machineProfile(row.machine_type);
   const state = deriveMachineState(row, nowMs);
@@ -337,10 +345,31 @@ export function MachineInspector({
                 {verdict.value === 1 ? "cavity" : "cavities"} (from the {verdict.source === "default" ? "1-cavity default" : verdict.source}).
               </div>
               {verdict.mismatch && (
-                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800">
-                  The recipe says <span className="font-semibold">{verdict.recipe}</span> cavities but counting uses{" "}
-                  <span className="font-semibold">{verdict.value}</span> — fix the machine panel, or confirm the mould
-                  really changed. Until then the parts numbers are off by that factor.
+                <div className="rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-800 flex flex-col gap-2">
+                  <span>
+                    The recipe says <span className="font-semibold">{verdict.recipe}</span> cavities but counting uses{" "}
+                    <span className="font-semibold">{verdict.value}</span> — the parts numbers are off by that factor.
+                  </span>
+                  {mapping && verdict.recipe != null && (
+                    <button
+                      onClick={async () => {
+                        setSettingOverride(true);
+                        setError(null);
+                        try {
+                          await mapMachineCraft(orgId, row.machine_id, mapping.craft_id, mapping.product_id, verdict.recipe);
+                          await load();
+                        } catch (e) {
+                          setError(e instanceof Error ? e.message : String(e));
+                        } finally {
+                          setSettingOverride(false);
+                        }
+                      }}
+                      disabled={settingOverride}
+                      className="self-start h-10 px-4 rounded-lg bg-amber-600 text-white text-sm font-semibold hover:bg-amber-700 transition-colors disabled:opacity-50"
+                    >
+                      {settingOverride ? "Recounting…" : `Count with the recipe's ${verdict.recipe} — recount history`}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

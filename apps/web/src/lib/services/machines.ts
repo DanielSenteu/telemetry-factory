@@ -35,13 +35,19 @@ export async function getUnmappedCrafts(orgId: number) {
   return data || [];
 }
 
-export async function mapMachineCraft(orgId: number, machineId: number, craftId: string, productId: number) {
+export async function mapMachineCraft(
+  orgId: number,
+  machineId: number,
+  craftId: string,
+  productId: number,
+  cavityOverride: number | null = null
+) {
   const { error } = await supabase.rpc("map_machine_craft", {
     p_org_id: orgId,
     p_machine_id: machineId,
     p_craft_id: craftId,
     p_product_id: productId,
-    p_cavity_override: null,
+    p_cavity_override: cavityOverride,
   });
   if (error) throw new Error(error.message);
 }
