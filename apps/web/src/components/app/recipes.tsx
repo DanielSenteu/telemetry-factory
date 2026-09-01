@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { field } from "@/components/app/modal";
+import { convert, familyMembers, canonicalUnit } from "@/lib/services/units";
 import {
   listFinishedGoods,
   listRawMaterials,
@@ -27,6 +28,10 @@ export function Recipes({ orgId }: { orgId: number }) {
   // add-line form
   const [componentId, setComponentId] = useState("");
   const [qty, setQty] = useState("");
+  // The unit the amount is TYPED in — any family member of the material's
+  // unit; storage always converts back to the material's own unit.
+  const [entryUnit, setEntryUnit] = useState("");
+  const [perN, setPerN] = useState("");
   // shot params form
   const [cavities, setCavities] = useState("");
   const [runnerG, setRunnerG] = useState("");
@@ -81,9 +86,13 @@ export function Recipes({ orgId }: { orgId: number }) {
     try {
       const selectedMat = materials.find((m) => m.id === Number(componentId));
       const uom = selectedMat?.unit_of_measure || "unit";
-      await upsertBOMLine(orgId, productId, Number(componentId), Number(qty), uom);
+      // Typed in kg, stored in the material's own unit (g) — exact, in-family.
+      const stored = entryUnit && entryUnit !== uom ? convert(Number(qty), entryUnit, uom) : Number(qty);
+      await upsertBOMLine(orgId, productId, Number(componentId), stored, uom, Number(perN) || 1);
       setComponentId("");
       setQty("");
+      setEntryUnit("");
+      setPerN("");
       await loadBom(productId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -166,6 +175,9 @@ export function Recipes({ orgId }: { orgId: number }) {
                     <span className="font-medium flex-1">{l.component_name}</span>
                     <span className="font-mono font-semibold tabular-nums">
                       {Number(l.qty_per_unit).toLocaleString()} {l.uom}
+                      {Number(l.per_units) !== 1 && (
+                        <span className="text-black/45 font-normal"> / {Number(l.per_units).toLocaleString()} units</span>
+                      )}
                     </span>
                     <button
                       onClick={() => removeLine(l.id)}
@@ -182,19 +194,42 @@ export function Recipes({ orgId }: { orgId: number }) {
             <div className="mt-4 pt-4 border-t border-black/5 flex flex-wrap items-end gap-3">
               <label className="flex flex-col gap-1.5 flex-1 min-w-44">
                 <span className="text-sm font-medium text-black/70">Material</span>
-                <select className={field} value={componentId} onChange={(e) => setComponentId(e.target.value)}>
+                <select className={field} value={componentId} onChange={(e) => { setComponentId(e.target.value); setEntryUnit(""); }}>
                   <option value="">Choose…</option>
                   {materials.map((m) => (
                     <option key={m.id} value={m.id}>{m.name}</option>
                   ))}
                 </select>
               </label>
-              <label className="flex flex-col gap-1.5 w-40">
-                <span className="text-sm font-medium text-black/70">
-                  {(materials.find((m) => m.id === Number(componentId))?.unit_of_measure || "Amount")} per unit
-                </span>
-                <input type="number" inputMode="decimal" className={field + " font-mono"} value={qty} onChange={(e) => setQty(e.target.value)} />
-              </label>
+              {(() => {
+                const matUom = materials.find((m) => m.id === Number(componentId))?.unit_of_measure || "";
+                const members = familyMembers(matUom);
+                const showUnitPick = members.length > 1;
+                return (
+                  <>
+                    <label className="flex flex-col gap-1.5 w-32">
+                      <span className="text-sm font-medium text-black/70">Amount</span>
+                      <input type="number" inputMode="decimal" className={field + " font-mono"} value={qty} onChange={(e) => setQty(e.target.value)} />
+                    </label>
+                    {showUnitPick ? (
+                      <label className="flex flex-col gap-1.5 w-40">
+                        <span className="text-sm font-medium text-black/70">In</span>
+                        <select className={field} value={entryUnit || canonicalUnit(matUom) || matUom} onChange={(e) => setEntryUnit(e.target.value)}>
+                          {members.map((u) => (
+                            <option key={u.value} value={u.value}>{u.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                    ) : (
+                      componentId && <span className="text-sm text-black/50 pb-3.5">{matUom || "units"}</span>
+                    )}
+                    <label className="flex flex-col gap-1.5 w-32">
+                      <span className="text-sm font-medium text-black/70">Per how many</span>
+                      <input type="number" inputMode="numeric" className={field + " font-mono"} value={perN} onChange={(e) => setPerN(e.target.value)} placeholder="1" />
+                    </label>
+                  </>
+                );
+              })()}
               <button
                 onClick={addLine}
                 disabled={saving === "line" || !componentId || !Number(qty)}

@@ -27,8 +27,8 @@ export default function HomePage() {
           <Reveal delay={0.2}>
             <p className="text-lg text-black/60 leading-relaxed max-w-lg">
               Industrial-Sync integrates directly into your machinery controllers —
-              modern systems such as Delta and Techmation, or any legacy factory PLC
-              setup — retrieving key parameters natively from the machines. Powered by
+              whether utilizing modern automation systems or legacy factory PLCs —
+              retrieving key parameters natively from the machines. Powered by
               stable IIoT connectivity, our platform bridges the physical-to-digital
               divide to eliminate shop-floor data leaks completely. Management gets
               real-time, tamper-proof tracking — shot by shot — of exact production

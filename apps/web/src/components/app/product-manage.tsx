@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Modal, field, primaryBtn } from "@/components/app/modal";
+import { UnitSelect } from "@/components/app/unit-select";
 import {
   updateProduct,
   archiveProduct,
@@ -156,7 +157,7 @@ function EditFields({ product, onDone, onClose }: { product: StockedProduct; onD
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-black/70">Counted in</span>
-        <input className={field} value={uom} onChange={(e) => setUom(e.target.value)} />
+        <UnitSelect value={uom} onChange={setUom} />
       </label>
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-black/70">Low-stock warning at ({product.unit_of_measure}, optional)</span>

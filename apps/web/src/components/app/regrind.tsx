@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Modal, field, primaryBtn } from "@/components/app/modal";
+import { convert, familyMembers, canonicalUnit } from "@/lib/services/units";
 import { getRegrindBalances, postRegrindUse, type RegrindBalance } from "@/lib/services/inventory";
 
 // The regrind pool: plastic that exists physically but isn't in a sack.
@@ -123,12 +124,20 @@ function LogUseDialog({
 }) {
   const [materialId, setMaterialId] = useState(balances.length === 1 ? String(balances[0].material_product_id) : "");
   const [qty, setQty] = useState("");
+  const [entryUnit, setEntryUnit] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const selected = balances.find((b) => String(b.material_product_id) === materialId);
-  const q = Number(qty) || 0;
+  const matUnit = selected?.unit_of_measure ?? "";
+  const members = familyMembers(matUnit);
+  // Typed in any family member; posted in the material's own unit.
+  const q = (() => {
+    const typed = Number(qty) || 0;
+    if (!typed || !entryUnit || entryUnit === matUnit) return typed;
+    try { return convert(typed, entryUnit, matUnit); } catch { return typed; }
+  })();
   const over = selected && q > Number(selected.balance_g);
 
   const submit = async () => {
@@ -154,7 +163,7 @@ function LogUseDialog({
         </p>
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-black/70">Material</span>
-          <select className={field} value={materialId} onChange={(e) => setMaterialId(e.target.value)}>
+          <select className={field} value={materialId} onChange={(e) => { setMaterialId(e.target.value); setEntryUnit(""); }}>
             <option value="">Choose…</option>
             {balances.map((b) => (
               <option key={b.material_product_id} value={b.material_product_id}>
@@ -163,12 +172,27 @@ function LogUseDialog({
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-black/70">
-            Amount loaded back{selected ? ` (${selected.unit_of_measure})` : ""}
-          </span>
-          <input type="number" inputMode="decimal" className={field + " font-mono"} value={qty} onChange={(e) => setQty(e.target.value)} />
-        </label>
+        <div className="flex items-end gap-3">
+          <label className="flex flex-col gap-1.5 flex-1">
+            <span className="text-sm font-medium text-black/70">Amount loaded back</span>
+            <input type="number" inputMode="decimal" className={field + " font-mono"} value={qty} onChange={(e) => setQty(e.target.value)} />
+          </label>
+          {members.length > 1 ? (
+            <label className="flex flex-col gap-1.5 w-40">
+              <span className="text-sm font-medium text-black/70">In</span>
+              <select className={field} value={entryUnit || canonicalUnit(matUnit) || matUnit} onChange={(e) => setEntryUnit(e.target.value)}>
+                {members.map((u) => (
+                  <option key={u.value} value={u.value}>{u.label}</option>
+                ))}
+              </select>
+            </label>
+          ) : (
+            selected && <span className="text-sm text-black/50 pb-3.5">{matUnit}</span>
+          )}
+        </div>
+        {entryUnit && selected && entryUnit !== matUnit && q > 0 && (
+          <span className="text-xs font-mono text-black/45 -mt-2">= {q.toLocaleString(undefined, { maximumFractionDigits: 2 })} {matUnit}</span>
+        )}
         {over && (
           <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             That&apos;s more than the pool holds — allowed if the scale says so, but double-check the number.

@@ -1,15 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Modal } from "@/components/app/modal";
+import { useCallback, useEffect, useState } from "react";
+import { Modal, field, primaryBtn } from "@/components/app/modal";
 import {
   getMachineInspectorData,
   machineProfile,
   effectiveCavity,
   deriveMachineState,
   formatNairobi,
+  getCountAction,
+  setMovementCountAction,
+  clearCountAction,
+  postCountAction,
+  listConsumables,
   type MachineRow,
   type MachineInspectorData,
+  type CountAction,
 } from "@/lib/services/machines";
 
 // The machine, opened up. Two questions a glance must answer:
@@ -46,6 +52,163 @@ function Signal({ name, value }: { name: string; value: string }) {
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h3 className="font-mono text-[11px] font-bold tracking-widest text-black/40 uppercase">{children}</h3>
+  );
+}
+
+// Per-count action for action machines: "each count, do this" — configured
+// once, posted as ONE aggregated movement per day. The machine's own product
+// isn't touched (the moulder already counted it); this is consumables only.
+function CountActionSection({
+  orgId,
+  machineId,
+  countNoun,
+  todayCounts,
+}: {
+  orgId: number;
+  machineId: number;
+  countNoun: string;
+  todayCounts: number;
+}) {
+  const [action, setAction] = useState<CountAction | null | undefined>(undefined);
+  const [consumables, setConsumables] = useState<Array<{ id: number; name: string; unit_of_measure: string }>>([]);
+  const [editing, setEditing] = useState(false);
+  const [productId, setProductId] = useState("");
+  const [qtyPer, setQtyPer] = useState("");
+  const [busy, setBusy] = useState<null | "save" | "post" | "clear">(null);
+  const [posted, setPosted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const [a, c] = await Promise.all([getCountAction(orgId, machineId), listConsumables(orgId)]);
+      setAction(a);
+      setConsumables(c);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [orgId, machineId]);
+
+  useEffect(() => {
+    let gone = false;
+    Promise.resolve().then(() => { if (!gone) load(); });
+    return () => { gone = true; };
+  }, [load]);
+
+  const save = async () => {
+    if (!productId || !Number(qtyPer)) return;
+    setBusy("save");
+    setError(null);
+    try {
+      await setMovementCountAction(orgId, machineId, Number(productId), Number(qtyPer));
+      setEditing(false);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const clear = async () => {
+    setBusy("clear");
+    setError(null);
+    try {
+      await clearCountAction(orgId, machineId);
+      await load();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const post = async () => {
+    setBusy("post");
+    setError(null);
+    try {
+      await postCountAction(orgId, machineId);
+      setPosted(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const actionProduct = action?.product_id ? consumables.find((c) => c.id === action.product_id) : null;
+
+  return (
+    <div className="flex flex-col gap-2.5">
+      <SectionTitle>Per-count action</SectionTitle>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      {action === undefined ? (
+        <div className="rounded-lg bg-black/[0.035] h-9 animate-pulse" />
+      ) : action && !editing ? (
+        <>
+          <div className="rounded-xl border border-black/10 p-3 flex items-center gap-3 flex-wrap">
+            <span className="text-sm">
+              Each count uses{" "}
+              <span className="font-mono font-semibold">
+                {Number(action.qty_per_count).toLocaleString()} {actionProduct?.unit_of_measure ?? ""}
+              </span>{" "}
+              of <span className="font-semibold">{actionProduct?.name ?? `Product ${action.product_id}`}</span>
+            </span>
+            <div className="ml-auto flex gap-2">
+              <button onClick={() => { setEditing(true); setProductId(String(action.product_id ?? "")); setQtyPer(String(action.qty_per_count ?? "")); }} className="text-sm text-black/50 hover:text-black px-2 py-1">
+                Change
+              </button>
+              <button onClick={clear} disabled={busy === "clear"} className="text-sm text-black/50 hover:text-red-600 px-2 py-1">
+                {busy === "clear" ? "Removing…" : "Remove"}
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={post}
+            disabled={busy === "post" || posted || todayCounts <= 0}
+            className={primaryBtn + " h-11"}
+          >
+            {posted
+              ? "Posted — stock updated"
+              : busy === "post"
+                ? "Posting…"
+                : `Post today's usage (${todayCounts.toLocaleString()} ${countNoun})`}
+          </button>
+          <p className="text-xs text-black/45">
+            Posts once per day as a single stock movement — posting again the same day does nothing.
+          </p>
+        </>
+      ) : (
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="flex flex-col gap-1.5 flex-1 min-w-44">
+            <span className="text-sm font-medium text-black/70">Each count uses…</span>
+            <select className={field} value={productId} onChange={(e) => setProductId(e.target.value)}>
+              <option value="">Choose a material…</option>
+              {consumables.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1.5 w-36">
+            <span className="text-sm font-medium text-black/70">
+              Amount ({consumables.find((c) => c.id === Number(productId))?.unit_of_measure || "per count"})
+            </span>
+            <input type="number" inputMode="decimal" className={field + " font-mono"} value={qtyPer} onChange={(e) => setQtyPer(e.target.value)} />
+          </label>
+          <button
+            onClick={save}
+            disabled={busy === "save" || !productId || !Number(qtyPer)}
+            className="h-12 px-6 rounded-lg bg-[var(--ink)] text-white font-medium hover:bg-black transition-colors disabled:opacity-50"
+          >
+            {busy === "save" ? "Saving…" : "Save"}
+          </button>
+          {editing && action && (
+            <button onClick={() => setEditing(false)} className="h-12 px-4 text-sm text-black/50 hover:text-black">
+              Cancel
+            </button>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -211,6 +374,15 @@ export function MachineInspector({
             )}
           </div>
         </div>
+
+        {profile.kind === "actions" && (
+          <CountActionSection
+            orgId={orgId}
+            machineId={row.machine_id}
+            countNoun={profile.countNoun}
+            todayCounts={row.today_shots}
+          />
+        )}
       </div>
     </Modal>
   );

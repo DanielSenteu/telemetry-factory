@@ -147,6 +147,71 @@ export async function getMachineInspectorData(orgId: number, machineId: number):
   };
 }
 
+// ── Per-count actions (action machines) ───────────────────
+
+export type CountAction = {
+  machine_id: number;
+  kind: "movement" | "bom";
+  product_id: number | null;
+  qty_per_count: number | null;
+  bom_id: number | null;
+};
+
+export async function getCountAction(orgId: number, machineId: number): Promise<CountAction | null> {
+  const { data, error } = await supabase
+    .from("machine_count_actions")
+    .select("machine_id, kind, product_id, qty_per_count, bom_id")
+    .eq("org_id", orgId)
+    .eq("machine_id", machineId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+export async function setMovementCountAction(orgId: number, machineId: number, productId: number, qtyPerCount: number) {
+  const { error } = await supabase.from("machine_count_actions").upsert({
+    machine_id: machineId,
+    org_id: orgId,
+    kind: "movement",
+    product_id: productId,
+    qty_per_count: qtyPerCount,
+    bom_id: null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function clearCountAction(orgId: number, machineId: number) {
+  const { error } = await supabase
+    .from("machine_count_actions")
+    .delete()
+    .eq("org_id", orgId)
+    .eq("machine_id", machineId);
+  if (error) throw new Error(error.message);
+}
+
+/** Post one day's counts through the configured action. Idempotent per day. */
+export async function postCountAction(orgId: number, machineId: number, day?: string) {
+  const { error } = await supabase.rpc("post_count_action", {
+    p_org_id: orgId,
+    p_machine_id: machineId,
+    p_day: day ?? null,
+    p_counts_override: null,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function listConsumables(orgId: number) {
+  const { data, error } = await supabase
+    .from("products")
+    .select("id, name, unit_of_measure")
+    .eq("org_id", orgId)
+    .in("kind", ["raw_material", "consumable"])
+    .eq("active", true)
+    .order("name");
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
 export async function listProductsForMapping(orgId: number) {
   const { data, error } = await supabase
     .from("products")

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Modal, field, primaryBtn } from "@/components/app/modal";
 import { listProducts, createProduct, type StockedProduct } from "@/lib/services/inventory";
 import { ProductManageDialog } from "@/components/app/product-manage";
+import { UnitSelect } from "@/components/app/unit-select";
 
 // Materials: what do we have? Raw materials and finished goods, every number
 // derived from the append-only ledger — nothing typed, nothing to drift.
@@ -232,7 +233,7 @@ function AddProductDialog({ orgId, onClose, onDone }: { orgId: number; onClose: 
           </label>
           <label className="flex flex-col gap-1.5">
             <span className="text-sm font-medium text-black/70">Counted in</span>
-            <input className={field} value={uom} onChange={(e) => setUom(e.target.value)} placeholder="each / g / kg / pcs" />
+            <UnitSelect value={uom} onChange={setUom} />
           </label>
           {kind === "finished_good" && (
             <label className="flex flex-col gap-1.5">
