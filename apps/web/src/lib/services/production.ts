@@ -11,6 +11,8 @@ export type BomLine = {
   // The line consumes qty_per_unit per THIS MANY units of the product
   // ("1 box per 500 caps"). 1 = the ordinary per-unit line.
   per_units: number;
+  // When the line bills: at the moulder's confirm or the wrapper's post.
+  stage: "moulding" | "packaging";
   component_name: string;
 };
 
@@ -62,7 +64,7 @@ export async function getBOMForProduct(orgId: number, productId: number): Promis
 
   const { data: lines, error: lErr } = await supabase
     .from("bom_lines")
-    .select("id, component_product_id, qty_per_unit, uom, per_units, products(name)")
+    .select("id, component_product_id, qty_per_unit, uom, per_units, stage, products(name)")
     .eq("bom_id", bom.id)
     .order("id");
   if (lErr) throw new Error(lErr.message);
@@ -75,6 +77,7 @@ export async function getBOMForProduct(orgId: number, productId: number): Promis
       qty_per_unit: l.qty_per_unit,
       uom: l.uom,
       per_units: l.per_units ?? 1,
+      stage: (l.stage as "moulding" | "packaging") ?? "moulding",
       component_name: (l.products as unknown as { name: string } | null)?.name ?? "Unknown",
     })),
   };
@@ -86,7 +89,8 @@ export async function upsertBOMLine(
   componentId: number,
   qty: number,
   uom: string,
-  perUnits: number = 1
+  perUnits: number = 1,
+  stage: "moulding" | "packaging" = "moulding"
 ) {
   const { error } = await supabase.rpc("upsert_bom_line", {
     p_org_id: orgId,
@@ -95,6 +99,7 @@ export async function upsertBOMLine(
     p_qty: qty,
     p_uom: uom,
     p_per_units: perUnits,
+    p_stage: stage,
   });
   if (error) throw new Error(error.message);
 }

@@ -32,6 +32,7 @@ export function Recipes({ orgId }: { orgId: number }) {
   // unit; storage always converts back to the material's own unit.
   const [entryUnit, setEntryUnit] = useState("");
   const [perN, setPerN] = useState("");
+  const [stage, setStage] = useState<"moulding" | "packaging">("moulding");
   // shot params form
   const [cavities, setCavities] = useState("");
   const [runnerG, setRunnerG] = useState("");
@@ -88,11 +89,12 @@ export function Recipes({ orgId }: { orgId: number }) {
       const uom = selectedMat?.unit_of_measure || "unit";
       // Typed in kg, stored in the material's own unit (g) — exact, in-family.
       const stored = entryUnit && entryUnit !== uom ? convert(Number(qty), entryUnit, uom) : Number(qty);
-      await upsertBOMLine(orgId, productId, Number(componentId), stored, uom, Number(perN) || 1);
+      await upsertBOMLine(orgId, productId, Number(componentId), stored, uom, Number(perN) || 1, stage);
       setComponentId("");
       setQty("");
       setEntryUnit("");
       setPerN("");
+      setStage("moulding");
       await loadBom(productId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -172,7 +174,14 @@ export function Recipes({ orgId }: { orgId: number }) {
               <div className="mt-3 flex flex-col">
                 {bom.lines.map((l) => (
                   <div key={l.id} className="flex items-center gap-3 py-3 border-t border-black/5 first:border-t-0">
-                    <span className="font-medium flex-1">{l.component_name}</span>
+                    <span className="font-medium flex-1">
+                      {l.component_name}
+                      {l.stage === "packaging" && (
+                        <span className="ml-2 rounded bg-black/[0.06] px-2 py-0.5 text-[11px] font-mono font-semibold text-black/55">
+                          PACKAGING
+                        </span>
+                      )}
+                    </span>
                     <span className="font-mono font-semibold tabular-nums">
                       {Number(l.qty_per_unit).toLocaleString()} {l.uom}
                       {Number(l.per_units) !== 1 && (
@@ -226,6 +235,13 @@ export function Recipes({ orgId }: { orgId: number }) {
                     <label className="flex flex-col gap-1.5 w-32">
                       <span className="text-sm font-medium text-black/70">Per how many</span>
                       <input type="number" inputMode="numeric" className={field + " font-mono"} value={perN} onChange={(e) => setPerN(e.target.value)} placeholder="1" />
+                    </label>
+                    <label className="flex flex-col gap-1.5 w-40">
+                      <span className="text-sm font-medium text-black/70">Used at</span>
+                      <select className={field} value={stage} onChange={(e) => setStage(e.target.value as "moulding" | "packaging")}>
+                        <option value="moulding">Moulding</option>
+                        <option value="packaging">Packaging / sealing</option>
+                      </select>
                     </label>
                   </>
                 );

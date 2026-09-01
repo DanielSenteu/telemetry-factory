@@ -157,16 +157,14 @@ export async function getMachineInspectorData(orgId: number, machineId: number):
 
 export type CountAction = {
   machine_id: number;
-  kind: "movement" | "bom";
-  product_id: number | null;
-  qty_per_count: number | null;
-  bom_id: number | null;
+  product_id: number;
+  qty_per_count: number;
 };
 
 export async function getCountAction(orgId: number, machineId: number): Promise<CountAction | null> {
   const { data, error } = await supabase
     .from("machine_count_actions")
-    .select("machine_id, kind, product_id, qty_per_count, bom_id")
+    .select("machine_id, product_id, qty_per_count")
     .eq("org_id", orgId)
     .eq("machine_id", machineId)
     .maybeSingle();
@@ -178,10 +176,8 @@ export async function setMovementCountAction(orgId: number, machineId: number, p
   const { error } = await supabase.from("machine_count_actions").upsert({
     machine_id: machineId,
     org_id: orgId,
-    kind: "movement",
     product_id: productId,
     qty_per_count: qtyPerCount,
-    bom_id: null,
   });
   if (error) throw new Error(error.message);
 }
@@ -195,13 +191,16 @@ export async function clearCountAction(orgId: number, machineId: number) {
   if (error) throw new Error(error.message);
 }
 
-/** Post one day's counts through the configured action. Idempotent per day. */
-export async function postCountAction(orgId: number, machineId: number, day?: string) {
+/** Post one day's counts. With productId ("what was wrapped today?") the
+ *  product's PACKAGING recipe lines bill; without it, the machine's fixed
+ *  fallback action does. Idempotent per machine per day. */
+export async function postCountAction(orgId: number, machineId: number, day?: string, productId?: number) {
   const { error } = await supabase.rpc("post_count_action", {
     p_org_id: orgId,
     p_machine_id: machineId,
     p_day: day ?? null,
     p_counts_override: null,
+    p_product_id: productId ?? null,
   });
   if (error) throw new Error(error.message);
 }

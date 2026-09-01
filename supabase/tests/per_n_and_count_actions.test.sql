@@ -1,12 +1,13 @@
--- pgTAP: per-N recipe lines + per-count actions (migration 61).
+-- pgTAP: per-N recipe lines, stages, and per-count actions (migrations 61 & 64).
 --
 -- Tests:
---   1. A per-500 line consumes fractionally: 1 box per 500 caps × 1000 good = 2 boxes.
---   2. A per-1 line is untouched by the change (grams × qty as before).
---   3. post_count_action (movement kind) deducts qty_per_count × day counts.
---   4. post_count_action is idempotent — second call posts nothing new.
---   5. post_count_action (bom kind) honours per_units in its lines.
---   6. Org B admin cannot post org A's machine action.
+--   1. A per-500 moulding line consumes fractionally at confirm: 1000 good → 2 boxes.
+--   2. A per-1 moulding line is untouched by the changes (grams × qty as before).
+--   3. Fixed fallback action deducts qty_per_count × day counts, exactly once.
+--   4. Posting twice leaves one receipt (run twice = run once).
+--   5. Packaging-stage lines are NOT consumed at the moulder's confirm.
+--   6. "What was wrapped today?" post consumes the product's packaging lines.
+--   7. Org B admin cannot post org A's machine.
 --
 -- Run: supabase start && supabase test db
 
@@ -14,7 +15,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(6);
+SELECT plan(7);
 
 -- ── Fixture ───────────────────────────────────────────────────────────────────
 
@@ -37,25 +38,28 @@ INSERT INTO products (id, org_id, name, unit_of_measure, kind) VALUES
   (9930, 9930, 'Cap',      'each', 'finished_good'),
   (9931, 9930, 'HDPE',     'g',    'raw_material'),
   (9932, 9930, 'Box',      'each', 'consumable'),
-  (9933, 9930, 'Wrapper',  'each', 'consumable');
+  (9933, 9930, 'Wrapper',  'each', 'consumable'),
+  (9934, 9930, 'Film',     'm',    'consumable');
 
--- Recipe: 2.7 g HDPE per cap + 1 box per 500 caps.
+-- Recipe for caps: 2.7 g HDPE per cap + 1 box per 500 (both moulding),
+-- and 0.2 m film per cap at PACKAGING.
 SELECT set_config('request.jwt.claims',
   '{"sub":"a9300000-0000-0000-0000-000000000001","role":"authenticated"}', true);
 
 SELECT upsert_bom_line(9930, 9930, 9931, 2.7, 'g');
 SELECT upsert_bom_line(9930, 9930, 9932, 1, 'each', 500);
+SELECT upsert_bom_line(9930, 9930, 9934, 0.2, 'm', 1, 'packaging');
 
--- Confirm a run of 1000 good caps.
+-- Confirm a moulding run of 1000 good caps.
 SELECT confirm_machine_output(9930, 9931, 9930, 1000, 0, '2026-08-20');
 
--- ── 1 & 2: consumption honours per_units ─────────────────────────────────────
+-- ── 1 & 2: moulding consumption honours per_units ────────────────────────────
 
 SELECT is(
   (SELECT SUM(-quantity) FROM stock_movements
    WHERE org_id = 9930 AND product_id = 9932 AND movement_type = 'production_consume'),
   2::numeric,
-  '1 box per 500 caps × 1000 good = 2 boxes consumed'
+  '1 box per 500 caps × 1000 good = 2 boxes consumed at confirm'
 );
 
 SELECT is(
@@ -65,12 +69,11 @@ SELECT is(
   'per-1 gram line unchanged: 2.7 g × 1000 = 2700 g'
 );
 
--- ── 3 & 4: movement-kind count action, idempotent ────────────────────────────
+-- ── 3 & 4: fixed fallback action, idempotent ─────────────────────────────────
 
-INSERT INTO machine_count_actions (machine_id, org_id, kind, product_id, qty_per_count)
-VALUES (9932, 9930, 'movement', 9933, 1);
+INSERT INTO machine_count_actions (machine_id, org_id, product_id, qty_per_count)
+VALUES (9932, 9930, 9933, 1);
 
--- The wrapper counted 340 units on 2026-08-20 (ledger row seeded directly).
 INSERT INTO machine_day_production (org_id, machine_id, day, shots, scrap, parts_gross)
 VALUES (9930, 9932, '2026-08-20', 340, 0, 340);
 
@@ -81,33 +84,39 @@ SELECT is(
   (SELECT SUM(-quantity) FROM stock_movements
    WHERE org_id = 9930 AND product_id = 9933 AND source_type = 'count_action'),
   340::numeric,
-  'movement action: 340 counts × 1 wrapper deducted, exactly once'
+  'fixed action: 340 counts × 1 wrapper deducted, exactly once'
 );
 
 SELECT is(
   (SELECT COUNT(*) FROM count_action_posts WHERE machine_id = 9932),
   1::bigint,
-  'posting twice leaves one post (run twice = run once)'
+  'posting twice leaves one receipt (run twice = run once)'
 );
 
--- ── 5: bom-kind action honours per_units ─────────────────────────────────────
+-- ── 5: packaging lines never bill at the moulder ─────────────────────────────
 
-INSERT INTO machine_count_actions (machine_id, org_id, kind, bom_id)
-VALUES (9933, 9930,'bom', (SELECT id FROM boms WHERE org_id = 9930 AND product_id = 9930));
+SELECT is(
+  (SELECT COALESCE(SUM(-quantity), 0) FROM stock_movements
+   WHERE org_id = 9930 AND product_id = 9934 AND source_type = 'production_run'),
+  0::numeric,
+  'the packaging film line is not consumed at moulding confirm'
+);
+
+-- ── 6: "what was wrapped today?" consumes packaging lines ────────────────────
 
 INSERT INTO machine_day_production (org_id, machine_id, day, shots, scrap, parts_gross)
 VALUES (9930, 9933, '2026-08-21', 1000, 0, 1000);
 
-SELECT post_count_action(9930, 9933, '2026-08-21');
+SELECT post_count_action(9930, 9933, '2026-08-21', NULL, 9930);
 
 SELECT is(
   (SELECT SUM(-quantity) FROM stock_movements
-   WHERE org_id = 9930 AND product_id = 9932 AND source_type = 'count_action'),
-  2::numeric,
-  'bom action: per-500 box line consumed fractionally over 1000 counts'
+   WHERE org_id = 9930 AND product_id = 9934 AND source_type = 'count_action'),
+  200::numeric,
+  'product post: 0.2 m film × 1000 wrapped = 200 m consumed'
 );
 
--- ── 6: org isolation (rule 16) ───────────────────────────────────────────────
+-- ── 7: org isolation (rule 16) ───────────────────────────────────────────────
 
 SELECT set_config('request.jwt.claims',
   '{"sub":"b9310000-0000-0000-0000-000000000002","role":"authenticated"}', true);

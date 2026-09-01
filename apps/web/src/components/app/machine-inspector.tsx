@@ -13,6 +13,7 @@ import {
   clearCountAction,
   postCountAction,
   listConsumables,
+  listProductsForMapping,
   mapMachineCraft,
   type MachineRow,
   type MachineInspectorData,
@@ -56,9 +57,12 @@ function SectionTitle({ children }: { children: React.ReactNode }) {
   );
 }
 
-// Per-count action for action machines: "each count, do this" — configured
-// once, posted as ONE aggregated movement per day. The machine's own product
-// isn't touched (the moulder already counted it); this is consumables only.
+// End-of-day posting for action machines. Primary flow: "what was wrapped
+// today?" — pick the product, and the day's counts bill through THAT
+// product's packaging recipe lines. Fallback: a fixed rule ("each count uses
+// 1 wrapper") for machines whose consumption never varies. Either way it
+// posts ONE aggregated movement per day; the machine's own product is never
+// touched (the moulder already counted it).
 function CountActionSection({
   orgId,
   machineId,
@@ -72,6 +76,8 @@ function CountActionSection({
 }) {
   const [action, setAction] = useState<CountAction | null | undefined>(undefined);
   const [consumables, setConsumables] = useState<Array<{ id: number; name: string; unit_of_measure: string }>>([]);
+  const [finishedGoods, setFinishedGoods] = useState<Array<{ id: number; name: string }>>([]);
+  const [wrapProductId, setWrapProductId] = useState("");
   const [editing, setEditing] = useState(false);
   const [productId, setProductId] = useState("");
   const [qtyPer, setQtyPer] = useState("");
@@ -81,9 +87,14 @@ function CountActionSection({
 
   const load = useCallback(async () => {
     try {
-      const [a, c] = await Promise.all([getCountAction(orgId, machineId), listConsumables(orgId)]);
+      const [a, c, fg] = await Promise.all([
+        getCountAction(orgId, machineId),
+        listConsumables(orgId),
+        listProductsForMapping(orgId),
+      ]);
       setAction(a);
       setConsumables(c);
+      setFinishedGoods(fg);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -127,7 +138,7 @@ function CountActionSection({
     setBusy("post");
     setError(null);
     try {
-      await postCountAction(orgId, machineId);
+      await postCountAction(orgId, machineId, undefined, wrapProductId ? Number(wrapProductId) : undefined);
       setPosted(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -137,35 +148,59 @@ function CountActionSection({
   };
 
   const actionProduct = action?.product_id ? consumables.find((c) => c.id === action.product_id) : null;
+  const canPost = posted ? false : todayCounts > 0 && (!!wrapProductId || !!action);
 
   return (
     <div className="flex flex-col gap-2.5">
-      <SectionTitle>Per-count action</SectionTitle>
+      <SectionTitle>End of day</SectionTitle>
       {error && <p className="text-sm text-red-600">{error}</p>}
       {action === undefined ? (
         <div className="rounded-lg bg-black/[0.035] h-9 animate-pulse" />
-      ) : action && !editing ? (
+      ) : !editing ? (
         <>
-          <div className="rounded-xl border border-black/10 p-3 flex items-center gap-3 flex-wrap">
-            <span className="text-sm">
-              Each count uses{" "}
-              <span className="font-mono font-semibold">
-                {Number(action.qty_per_count).toLocaleString()} {actionProduct?.unit_of_measure ?? ""}
-              </span>{" "}
-              of <span className="font-semibold">{actionProduct?.name ?? `Product ${action.product_id}`}</span>
-            </span>
-            <div className="ml-auto flex gap-2">
-              <button onClick={() => { setEditing(true); setProductId(String(action.product_id ?? "")); setQtyPer(String(action.qty_per_count ?? "")); }} className="text-sm text-black/50 hover:text-black px-2 py-1">
-                Change
-              </button>
-              <button onClick={clear} disabled={busy === "clear"} className="text-sm text-black/50 hover:text-red-600 px-2 py-1">
-                {busy === "clear" ? "Removing…" : "Remove"}
-              </button>
+          <label className="flex flex-col gap-1.5">
+            <span className="text-sm font-medium text-black/70">What was it {countNoun === "wrapped" ? "wrapping" : "processing"} today?</span>
+            <select className={field} value={wrapProductId} onChange={(e) => { setWrapProductId(e.target.value); setPosted(false); }}>
+              <option value="">{action ? "No product — use the fixed rule below" : "Choose a product…"}</option>
+              {finishedGoods.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </label>
+          {wrapProductId !== "" && (
+            <p className="text-xs text-black/45 -mt-1">
+              The day&apos;s counts will bill through this product&apos;s <span className="font-semibold">packaging</span> recipe lines.
+            </p>
+          )}
+
+          {action && (
+            <div className="rounded-xl border border-black/10 p-3 flex items-center gap-3 flex-wrap">
+              <span className="text-sm">
+                Fixed rule: each count uses{" "}
+                <span className="font-mono font-semibold">
+                  {Number(action.qty_per_count).toLocaleString()} {actionProduct?.unit_of_measure ?? ""}
+                </span>{" "}
+                of <span className="font-semibold">{actionProduct?.name ?? `Product ${action.product_id}`}</span>
+              </span>
+              <div className="ml-auto flex gap-2">
+                <button onClick={() => { setEditing(true); setProductId(String(action.product_id ?? "")); setQtyPer(String(action.qty_per_count ?? "")); }} className="text-sm text-black/50 hover:text-black px-2 py-1">
+                  Change
+                </button>
+                <button onClick={clear} disabled={busy === "clear"} className="text-sm text-black/50 hover:text-red-600 px-2 py-1">
+                  {busy === "clear" ? "Removing…" : "Remove"}
+                </button>
+              </div>
             </div>
-          </div>
+          )}
+          {!action && (
+            <button onClick={() => setEditing(true)} className="self-start text-sm text-black/50 hover:text-black">
+              + Set a fixed rule instead (each count always uses the same material)
+            </button>
+          )}
+
           <button
             onClick={post}
-            disabled={busy === "post" || posted || todayCounts <= 0}
+            disabled={busy === "post" || !canPost}
             className={primaryBtn + " h-11"}
           >
             {posted
@@ -202,11 +237,9 @@ function CountActionSection({
           >
             {busy === "save" ? "Saving…" : "Save"}
           </button>
-          {editing && action && (
-            <button onClick={() => setEditing(false)} className="h-12 px-4 text-sm text-black/50 hover:text-black">
-              Cancel
-            </button>
-          )}
+          <button onClick={() => setEditing(false)} className="h-12 px-4 text-sm text-black/50 hover:text-black">
+            Cancel
+          </button>
         </div>
       )}
     </div>
