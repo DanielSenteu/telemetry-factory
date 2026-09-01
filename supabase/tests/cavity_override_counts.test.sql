@@ -12,7 +12,7 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(3);
+SELECT plan(4);
 
 -- ── Fixture ───────────────────────────────────────────────────────────────────
 
@@ -71,6 +71,22 @@ SELECT is(
    WHERE machine_id = 9942 AND day = '2026-08-20'),
   5::bigint,
   'clearing the override returns counting to the panel value'
+);
+
+-- A panel cavity of 0 means unset: parts fall back to ×1, never ×0.
+INSERT INTO machines (id, org_id, name, mac) VALUES
+  (9943, 9940, 'Panel-zero', 'aa:bb:cc:62:00:03');
+INSERT INTO machine_readings
+  (machine_id, org_id, observed_at, craft_id, shot_count, inferior_count, cycle_time, mold_cavity)
+VALUES
+  (9943, 9940, '2026-08-20T07:00:00Z', 'X1', 50, 0, 13.1, 0),
+  (9943, 9940, '2026-08-20T07:01:00Z', 'X1', 54, 0, 13.1, 0);
+
+SELECT is(
+  (SELECT parts_gross FROM machine_day_production
+   WHERE machine_id = 9943 AND day = '2026-08-20'),
+  4::bigint,
+  'panel cavity 0 counts as unset (×1), never multiplies parts to zero'
 );
 
 SELECT * FROM finish();
