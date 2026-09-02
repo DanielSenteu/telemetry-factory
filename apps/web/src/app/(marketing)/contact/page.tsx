@@ -5,7 +5,7 @@ export default function ContactPage() {
         <h1 className="font-display text-5xl font-bold tracking-tight">Book a virtual demo.</h1>
         <p className="mt-4 text-lg text-black/55 leading-relaxed">
           Leave your details and we will set up an online meeting. We explain
-          what Industrial-Sync does and show you the platform live — a real
+          what Industrial-Sync does and show you the platform live: a real
           factory floor running on it, in real time, machines counting as we
           speak. If it fits your operation, we arrange a factory visit from
           there.

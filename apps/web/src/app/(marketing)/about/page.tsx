@@ -7,7 +7,7 @@ export default function AboutPage() {
         <h1 className="font-display text-5xl font-bold tracking-tight">Why Industrial-Sync exists.</h1>
         <RevealInView className="mt-8 flex flex-col gap-5 text-lg text-black/65 leading-relaxed">
           <p>
-            Industrial-Sync began on a real factory floor in Nairobi — a manufacturer
+            Industrial-Sync began on a real factory floor in Nairobi: a manufacturer
             running injection moulding machines all day, selling thousands of
             units a week, and still unable to answer the simplest question in
             manufacturing: <em className="text-black">what do we have, and what should we make next?</em>
@@ -21,12 +21,12 @@ export default function AboutPage() {
           <p>
             So we built the loop. Machines counted honestly, invoices became
             stock, recipes deducted material, sales history became a demand
-            picture — and for the first time the numbers agreed with the floor.
+            picture, and for the first time the numbers agreed with the floor.
           </p>
           <p>
             We deliberately do not try to be everything. Industrial-Sync is not an ERP,
             not an accounting suite, not an HR system. It does one thing with
-            depth: production, materials and stock for factories that mould —
+            depth: production, materials and stock for factories that mould,
             built to survive power cuts, patchy internet and busy hands, because
             that is what real floors are like.
           </p>
@@ -40,7 +40,7 @@ export default function AboutPage() {
             {[
               ["Now", "Live floor, materials and stock, recipes and costing, sales mirroring, production planning."],
               ["Next", "More machine brands and controllers. Point-of-sale integration so shop sales deduct stock the same way invoices do."],
-              ["Then", "Multi-site factories on one screen, and the patterns three years of your own data can teach — when a machine drifts, when a material runs short, before it happens."],
+              ["Then", "Multi-site factories on one screen, and the patterns three years of your own data can teach: when a machine drifts, when a material runs short, before it happens."],
             ].map(([k, v]) => (
               <li key={k} className="flex gap-5">
                 <span className="font-mono text-sm text-[var(--accent)] font-semibold w-12 shrink-0 pt-0.5">{k}</span>

@@ -12,11 +12,11 @@ const SECTIONS = [
     kicker: "01 · THE FLOOR, LIVE",
     title: "Every machine, every shot, as it happens.",
     body: [
-      "Industrial-Sync splices directly into your machine's native computer brains — like your Techmation SCADA units and line PLCs — to read the exact numbers the machine trusts. No more waiting for supervisors to type up numbers or pass around unverified tallies. You see which machine is running, which is idling on your bill, and exactly what mould is running in real time.",
+      "Industrial-Sync splices directly into your machine's native computer brains, like your Techmation SCADA units and line PLCs, to read the exact numbers the machine trusts. No more waiting for supervisors to type up numbers or pass around unverified tallies. You see which machine is running, which is idling on your bill, and exactly what mould is running in real time.",
       "Shots become products automatically. If an 8-cavity mould clicks 1,000 times, that is 8,000 units on your books, minus the exact scrap the machine logs. The communication breakdown between the floor and the office is permanently dead. Nobody fakes a clipboard count at 5 PM ever again.",
     ],
     facts: [
-      ["Live Machine State", "Running, idle, alarm, or offline — visible at a single glance."],
+      ["Live Machine State", "Running, idle, alarm, or offline, visible at a single glance."],
       ["Performance Benchmarking", "Cycle time tracked against what is mathematically normal for that specific mould."],
       ["Native Code Extraction", "Machine alarms caught with factory error codes, precise timestamps, and exact durations."],
       ["Floor-Hardened Visibility", "Clean, bold dashboards readable from a metre away on the operator's tablet."],
@@ -27,9 +27,9 @@ const SECTIONS = [
     kicker: "02 · MATERIALS & STOCK",
     title: "Stock that tells the truth.",
     body: [
-      "Raw material should be tracked exactly how it arrives: at true cost. You photograph a supplier invoice, and Industrial-Sync reads the lines, books the kilograms, and maps the true purchase price instantly. You will know exactly where your capital is tied up without waiting for the end-of-month stock take — completely eliminating the blindspots of imported materials not yet received or currently in transit overseas.",
-      "Every product on your floor carries its exact recipe: the precise grams of polymer per unit, cavities per mould, and runner weights. When your machine executes a run, the system automatically deducts the exact material used. Even your runners are routed straight into a digital regrind pool — because sprues are usable material, not missing inventory.",
-      "The result is an air-tight stock ledger where nothing drifts and nothing is guessed. At the end of the month, the platform automatically generates an Executive Variance Report, mapping your total value movement, inventory margins, and changes in stock levels from the previous month — so every single shilling is traceable straight back to the machine event that caused it.",
+      "Raw material should be tracked exactly how it arrives: at true cost. You photograph a supplier invoice, and Industrial-Sync reads the lines, books the kilograms, and maps the true purchase price instantly. You will know exactly where your capital is tied up without waiting for the end-of-month stock take, completely eliminating the blindspots of imported materials not yet received or currently in transit overseas.",
+      "Every product on your floor carries its exact recipe: the precise grams of polymer per unit, cavities per mould, and runner weights. When your machine executes a run, the system automatically deducts the exact material used. Even your runners are routed straight into a digital regrind pool, because sprues are usable material, not missing inventory.",
+      "The result is an air-tight stock ledger where nothing drifts and nothing is guessed. At the end of the month, the platform automatically generates an Executive Variance Report, mapping your total value movement, inventory margins, and changes in stock levels from the previous month, so every single shilling is traceable straight back to the machine event that caused it.",
     ],
     facts: [
       ["Smart Invoice Logging", "Photograph any supplier invoice to bring material into stock at actual cost."],
@@ -43,7 +43,7 @@ const SECTIONS = [
     kicker: "03 · WHAT TO MAKE NEXT",
     title: "The morning decision, answered.",
     body: [
-      "Industrial-Sync links directly to your sales history — pulling a read-only stream from the invoicing software you already use — and translates years of client data into a live demand rate. Balanced against your live warehouse stock, the system calculates your exact weeks-of-cover. You see instantly which products are safe and which ones run out this week.",
+      "Industrial-Sync links directly to your sales history, pulling a read-only stream from the invoicing software you already use, and translates years of client data into a live demand rate. Balanced against your live warehouse stock, the system calculates your exact weeks-of-cover. You see instantly which products are safe and which ones run out this week.",
       "This completely kills capital overcommitment and inventory imbalances. The system handles the heavy math managers usually stress over on paper: it calculates, from production order, that a run of 12,000 surgical containers requires exactly 5.4 machine hours and 95 kg of polypropylene. If the polymer isn't in the warehouse, the system flags the shortfall before the heating bands are even turned on. Your most critical bottlenecks are never overshadowed.",
     ],
     facts: [
@@ -59,7 +59,7 @@ const SECTIONS = [
     title: "Power cuts. Manual runs. Broken parts. Covered.",
     body: [
       "A standard cloud system assumes your internet and power will never drop. Industrial-Sync was engineered inside real, breathing factory floors in Nairobi where the grid fluctuates. Internet down? Your data queues safely in the database at the local hardware edge layer and catches up automatically when the line returns. Power cut mid-shift? The machines keep their memory, and our gateways don't lose a single data packet.",
-      "Production that happens off the grid — an emergency manual run or a sudden outage — is logged by the operator in just two taps on our floor app. The product recipe still deducts the raw material, and your unit costs stay absolutely honest.",
+      "Production that happens off the grid, like an emergency manual run or a sudden outage, is logged by the operator in just two taps on our floor app. The product recipe still deducts the raw material, and your unit costs stay absolutely honest.",
       "Underneath it all, our database ledger is strictly append-only. Corrections are logged as new entries, never edited or deleted. When you audit a count, you get a bulletproof timeline of real events, completely eliminating those unfinished stories between shifts.",
     ],
     facts: [
@@ -74,7 +74,7 @@ const SECTIONS = [
     kicker: "05 · WORKS WITH WHAT YOU HAVE",
     title: "Keep your invoicing. We read it.",
     body: [
-      "You don't need to change how your sales team operates or throw out the invoicing software you trust. Industrial-Sync mirrors your active platforms — like Zoho Books or Oracle — in a secure, read-only, one-direction stream. We never write data back or alter your accounts. You link your invoice items to your physical product recipes once, and your entire operational history resolves retroactively.",
+      "You don't need to change how your sales team operates or throw out the invoicing software you trust. Industrial-Sync mirrors your active platforms, like Zoho Books or Oracle, in a secure, read-only, one-direction stream. We never write data back or alter your accounts. You link your invoice items to your physical product recipes once, and your entire operational history resolves retroactively.",
       "In our very first deployment, we mirrored 24,000 legacy invoices. Three years of fragmented sales history were instantly transformed into a live, clear demand picture. Your departments are unified overnight, and the owner knows the exact stock-out balances and material margins in real time.",
     ],
     facts: [
@@ -116,7 +116,7 @@ export default function ProductPage() {
         <p className="mt-4 text-lg text-black/55 max-w-2xl">
           Six simple steps that connect your entire factory. From the moment raw
           material arrives, to the exact second a machine makes a product,
-          straight to your final sales receipts — we close the loop so your
+          straight to your final sales receipts. We close the loop so your
           numbers finally tell the truth.
         </p>
       </section>
@@ -162,10 +162,10 @@ export default function ProductPage() {
           <div className="mt-8 grid md:grid-cols-2 gap-12">
             <div className="flex flex-col gap-4 text-white/65 leading-relaxed">
               <p>
-                Industrial-Sync doesn&apos;t just log numbers — it thinks. Our intelligence layer connects every
+                Industrial-Sync doesn&apos;t just log numbers. It thinks. Our intelligence layer connects every
                 data pipeline in your facility into a single brain. By cross-referencing live PLC machine
-                registers and energy draw with active material levels across any ERP — including Zoho, Oracle,
-                or SAP — BrainFloor AI continuously tracks your entire operation 24/7 to spot hidden anomalies
+                registers and energy draw with active material levels across any ERP, including Zoho, Oracle,
+                or SAP, BrainFloor AI continuously tracks your entire operation 24/7 to spot hidden anomalies
                 and operational patterns that human eyes completely miss.
               </p>
               <p>
@@ -176,7 +176,7 @@ export default function ProductPage() {
               </p>
               <p>
                 From day one, the system uses straight math to answer queries, and within 3 to 6 months, the AI
-                fully maps your floor&apos;s unique behavioral heartbeat — unlocking elite-level predictive
+                fully maps your floor&apos;s unique behavioral heartbeat, unlocking elite-level predictive
                 insights. You ask real, raw operational questions, and the AI instantly bridges your physical
                 machine metrics with your business financials to give you immediate, actionable execution.
               </p>
