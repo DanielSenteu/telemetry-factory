@@ -52,20 +52,20 @@ export default function HomePage() {
       <section className="border-y border-black/5 bg-white">
         <RevealInView className="mx-auto max-w-6xl px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8">
           <div>
-            <div className="font-mono text-3xl font-semibold"><Counter target={2} prefix="~" suffix="s" duration={0.9} /></div>
-            <div className="mt-1 text-sm text-black/50">between machine readings — you see cycles as they happen</div>
-          </div>
-          <div>
             <div className="font-mono text-3xl font-semibold"><Counter target={15} suffix="+" duration={1.1} /></div>
             <div className="mt-1 text-sm text-black/50">industrial parameters extracted continuously — real-time OEE, material scrap variances, mechanical alarms, and Specific Energy Consumption (SEC) per part</div>
           </div>
           <div>
-            <div className="font-mono text-3xl font-semibold"><Counter target={0} /></div>
-            <div className="mt-1 text-sm text-black/50">readings lost to an internet cut — data queues at the factory and catches up</div>
+            <div className="font-mono text-3xl font-semibold">±<Counter target={1.8} decimals={1} suffix="%" duration={1.4} /></div>
+            <div className="mt-1 text-sm text-black/50">material balance accuracy. Most factories can&apos;t tell you where their material went — we reconciled six months of it, gram by gram</div>
           </div>
           <div>
-            <div className="font-mono text-3xl font-semibold"><Counter target={24000} suffix="+" duration={1.8} /></div>
-            <div className="mt-1 text-sm text-black/50">sales invoices mirrored in our first deployment — three years of demand history</div>
+            <div className="font-mono text-3xl font-semibold"><Counter target={2} prefix="~" suffix="s" duration={0.9} /></div>
+            <div className="mt-1 text-sm text-black/50">between machine readings — you see cycles as they happen</div>
+          </div>
+          <div>
+            <div className="font-mono text-3xl font-semibold"><Counter target={0} /></div>
+            <div className="mt-1 text-sm text-black/50">readings lost to an internet cut — data queues at the factory and catches up</div>
           </div>
         </RevealInView>
       </section>
@@ -75,17 +75,20 @@ export default function HomePage() {
         <RevealInView>
         <h2 className="font-display text-4xl font-bold tracking-tight">One loop, closed.</h2>
         <p className="mt-3 text-lg text-black/55 max-w-2xl">
-          A factory is a flow: material comes in, machines turn it into product,
-          product goes out. Most software watches one piece. Industrial-Sync watches the
-          whole loop — so the numbers finally agree with the floor.
+          A factory is a constant financial and physical flow: raw materials
+          arrive, machinery transforms them, and finished inventory ships out.
+          Industrial-Sync mirrors your complete production loop in real time —
+          ensuring your warehouse ledger, physical machine cycles, and executive
+          office metrics finally speak the exact same language.
         </p>
         <div className="mt-10 grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[
             ["01", "Material Tracking & Verification", "Instantly log supplier invoices. Industrial-Sync automatically inputs raw polypropylene into your digital ledger at true cost, creating an air-tight line of sight from the warehouse to the machine barrel to stop material shrinkage."],
             ["02", "Precision Production Conversion", "Every single shot is extracted directly from the machine's native PLC brain. The system maps your exact product recipes against physical machine cycles, catching material waste, faked numbers, and floor leakage instantly."],
             ["03", "Sales & Demand Sync", "Sales flow in from your invoicing system and deduct finished goods automatically. The shelf count is real, not remembered — and three years of demand history stands behind every decision."],
-            ["04", "Command & Capital Allocation", "Demand, stock cover, machine hours and material sufficiency in one row — so capital goes where the numbers say, before the heaters are warm."],
+            ["04", "Command & Capital Variance", "Stop flying blind on your working capital. Industrial-Sync automatically generates dynamic monthly variance reports, tracking exactly what percentage of your cash is tied up in warehouse stock versus active shop-floor inputs — eliminating inventory imbalances before they stall your production."],
             ["05", "Net-Zero & Tariff Optimization", "Industrial-Sync continuously converts raw machine kilowatt-hour (kWh) draw into live CO₂-equivalent (CO₂e) metrics. The platform maps your Specific Energy Consumption (SEC) per part natively, advising management on the most efficient times to run production to exploit off-peak tariffs — while keeping your facility instantly audit-ready for EPRA and UN Global Compact ESG reporting."],
+            ["06", "BrainFloor AI Co-Pilot", "An interactive intelligence layer that cross-references all machine, material, and financial data 24/7. Management can chat directly with the floor to spot hidden leaks, optimize production runs, and catch maintenance anomalies before they cause a shutdown."],
           ].map(([n, t, d]) => (
             <div key={n} className="gloss rounded-2xl p-6">
               <div className="font-mono text-sm text-[var(--accent)] font-semibold">{n}</div>
@@ -135,7 +138,7 @@ export default function HomePage() {
         <div className="flex items-center gap-5">
           <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black text-base h-12 px-7" render={<Link href="/contact" />}>Book a virtual demo</Button>
           <Link href="/product" className="text-sm font-medium text-black/60 hover:text-black">
-            or read what you get →
+            See exactly how it works →
           </Link>
         </div>
         </RevealInView>

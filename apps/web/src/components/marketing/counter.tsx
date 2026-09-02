@@ -10,12 +10,14 @@ export function Counter({
   prefix = "",
   suffix = "",
   duration = 1.4,
+  decimals = 0,
   className,
 }: {
   target: number;
   prefix?: string;
   suffix?: string;
   duration?: number;
+  decimals?: number;
   className?: string;
 }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -34,17 +36,18 @@ export function Counter({
     const tick = (now: number) => {
       const u = Math.min(1, (now - start) / (duration * 1000));
       const eased = 1 - Math.pow(1 - u, 3);
-      setValue(Math.round(target * eased));
+      const factor = Math.pow(10, decimals);
+      setValue(Math.round(target * eased * factor) / factor);
       if (u < 1) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [inView, reduced, target, duration]);
+  }, [inView, reduced, target, duration, decimals]);
 
   return (
     <span ref={ref} className={className}>
       {prefix}
-      {value.toLocaleString()}
+      {value.toLocaleString(undefined, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}
       {suffix}
     </span>
   );

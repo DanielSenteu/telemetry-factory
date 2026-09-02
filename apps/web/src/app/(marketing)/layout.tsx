@@ -2,8 +2,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
 const nav = [
-  { href: "/product", label: "Product" },
-  { href: "/how-it-works", label: "How it works" },
+  { href: "/product", label: "How it works" },
+  { href: "/how-it-works", label: "Getting started" },
   { href: "/about", label: "About" },
 ];
 
