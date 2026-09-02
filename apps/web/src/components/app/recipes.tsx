@@ -205,9 +205,14 @@ export function Recipes({ orgId }: { orgId: number }) {
                 <span className="text-sm font-medium text-black/70">Material</span>
                 <select className={field} value={componentId} onChange={(e) => { setComponentId(e.target.value); setEntryUnit(""); }}>
                   <option value="">Choose…</option>
-                  {materials.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
+                  {materials
+                    .filter((m) => m.id !== productId)
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                        {m.kind === "component" || m.kind === "finished_good" ? " — made here" : ""}
+                      </option>
+                    ))}
                 </select>
               </label>
               {(() => {
@@ -276,9 +281,11 @@ export function Recipes({ orgId }: { orgId: number }) {
                 <span className="text-sm font-medium text-black/70">Runner material</span>
                 <select className={field} value={runnerMat} onChange={(e) => setRunnerMat(e.target.value)}>
                   <option value="">Choose…</option>
-                  {materials.map((m) => (
-                    <option key={m.id} value={m.id}>{m.name}</option>
-                  ))}
+                  {materials
+                    .filter((m) => m.kind === "raw_material")
+                    .map((m) => (
+                      <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
                 </select>
               </label>
               <button onClick={saveShot} disabled={saving === "shot"} className="h-12 px-6 rounded-lg border border-black/15 font-medium hover:bg-black/[0.04] transition-colors disabled:opacity-50">

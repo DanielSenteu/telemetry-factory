@@ -27,24 +27,28 @@ export type Bom = {
 
 export type Product = { id: number; name: string; sku: string | null; unit_of_measure?: string; kind?: string };
 
+/** Products that can carry a recipe: sellable goods AND in-house components. */
 export async function listFinishedGoods(orgId: number): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
-    .select("id, name, sku")
+    .select("id, name, sku, kind")
     .eq("org_id", orgId)
-    .eq("kind", "finished_good")
+    .in("kind", ["finished_good", "component"])
     .eq("active", true)
     .order("name");
   if (error) throw new Error(error.message);
   return data || [];
 }
 
+/** Everything a recipe line may consume — bought-in materials AND products
+ *  made in-house (two-layer BOM: a moulded component is an ingredient to
+ *  the sealing stage the way resin is to moulding). */
 export async function listRawMaterials(orgId: number): Promise<Product[]> {
   const { data, error } = await supabase
     .from("products")
     .select("id, name, sku, unit_of_measure, kind")
     .eq("org_id", orgId)
-    .in("kind", ["raw_material", "consumable"])
+    .in("kind", ["raw_material", "consumable", "component", "finished_good"])
     .eq("active", true)
     .order("name");
   if (error) throw new Error(error.message);

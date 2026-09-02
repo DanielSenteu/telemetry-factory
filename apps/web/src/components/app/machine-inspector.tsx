@@ -169,7 +169,8 @@ function CountActionSection({
           </label>
           {wrapProductId !== "" && (
             <p className="text-xs text-black/45 -mt-1">
-              The day&apos;s counts will bill through this product&apos;s <span className="font-semibold">packaging</span> recipe lines.
+              The day&apos;s counts bill through this product&apos;s <span className="font-semibold">packaging</span> recipe
+              lines — and if the recipe assembles from a moulded component, the finished stock is added automatically.
             </p>
           )}
 

@@ -10,7 +10,8 @@ import { UnitSelect } from "@/components/app/unit-select";
 // derived from the append-only ledger — nothing typed, nothing to drift.
 
 const KINDS = [
-  { key: "finished_good", label: "Finished good", hint: "Something you make and sell — containers, polypots, speculums" },
+  { key: "finished_good", label: "Finished good", hint: "Something you make and sell — sealed containers, polypots, speculums" },
+  { key: "component", label: "Component", hint: "Made here, goes inside another product, never sold alone — a moulded container before sealing" },
   { key: "raw_material", label: "Raw material", hint: "What machines consume — polypropylene, colourant" },
   { key: "consumable", label: "Consumable", hint: "Used in production but not the product — packaging, labels" },
 ] as const;

@@ -218,11 +218,13 @@ export async function listConsumables(orgId: number) {
 }
 
 export async function listProductsForMapping(orgId: number) {
+  // Moulders typically make in-house components now (two-layer BOM), so
+  // craft mapping and wrap posting offer both.
   const { data, error } = await supabase
     .from("products")
     .select("id, name, sku")
     .eq("org_id", orgId)
-    .eq("kind", "finished_good")
+    .in("kind", ["finished_good", "component"])
     .eq("active", true)
     .order("name");
   if (error) throw new Error(error.message);
