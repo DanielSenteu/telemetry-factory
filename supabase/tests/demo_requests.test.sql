@@ -11,14 +11,37 @@ BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SET LOCAL search_path = public, extensions;
 
-SELECT plan(3);
+SELECT plan(6);
 
 SET LOCAL ROLE anon;
 
 SELECT lives_ok(
-  $$ INSERT INTO demo_requests (name, company, phone, manufactures)
-     VALUES ('Jane Wanjiku', 'Nairobi Plastics', '+254700000000', 'caps and containers') $$,
+  $$ INSERT INTO demo_requests (name, company, phone, manufactures, email)
+     VALUES ('Jane Wanjiku', 'Nairobi Plastics', '+254 745-435 732', 'caps and containers', '  Jane@Example.COM ') $$,
   'an anonymous visitor can request a demo'
+);
+
+RESET ROLE;
+
+SELECT is(
+  (SELECT ARRAY[phone, email] FROM demo_requests WHERE name = 'Jane Wanjiku'),
+  ARRAY['+254745435732', 'jane@example.com'],
+  'phone and email are normalized on the way in'
+);
+
+SET LOCAL ROLE anon;
+
+SELECT throws_like(
+  $$ INSERT INTO demo_requests (name, phone, email)
+     VALUES ('Bad Email', '+254700000002', 'not-an-email') $$,
+  '%check constraint%',
+  'a malformed email is rejected'
+);
+
+SELECT throws_like(
+  $$ INSERT INTO demo_requests (name, phone) VALUES ('Bad Phone', 'call me maybe') $$,
+  '%check constraint%',
+  'a phone with no digits is rejected'
 );
 
 SELECT throws_like(
