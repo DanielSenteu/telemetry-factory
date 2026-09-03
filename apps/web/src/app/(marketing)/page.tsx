@@ -38,7 +38,7 @@ export default function HomePage() {
           <Reveal delay={0.3} className="flex items-center gap-5 pt-2">
             <Button size="lg" nativeButton={false} className="bg-[var(--ink)] hover:bg-black text-base h-12 px-7" render={<Link href="/contact" />}>Book a virtual demo</Button>
             <span className="text-sm text-black/50">
-              or call <span className="font-mono font-semibold text-black/80">[YOUR PHONE]</span>
+              or call <a href="tel:+254745435732" className="font-mono font-semibold text-black/80 hover:text-black">+254 745 435 732</a>
             </span>
           </Reveal>
         </div>

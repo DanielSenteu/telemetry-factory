@@ -34,7 +34,11 @@ export default function MarketingLayout({ children }: { children: React.ReactNod
         <div className="mx-auto max-w-6xl px-6 py-10 flex flex-wrap items-center gap-6 text-sm text-black/50">
           <span className="font-display font-bold text-black/70">Industrial-Sync</span>
           <span>A Telemetry company · Nairobi, Kenya</span>
-          <span className="ml-auto font-mono">[YOUR PHONE] · [YOUR EMAIL]</span>
+          <span className="ml-auto font-mono">
+            <a href="tel:+254745435732" className="hover:text-black">+254 745 435 732</a>
+            {" · "}
+            <a href="mailto:info@telemetrynetworks.net" className="hover:text-black">info@telemetrynetworks.net</a>
+          </span>
         </div>
       </footer>
     </div>

@@ -11,18 +11,18 @@ export default function ContactPage() {
           there.
         </p>
         <div className="mt-8 flex flex-col gap-3">
-          <div className="gloss rounded-xl px-5 py-4 flex items-center gap-4">
+          <a href="tel:+254745435732" className="gloss rounded-xl px-5 py-4 flex items-center gap-4 hover:ring-1 hover:ring-black/15 transition-shadow">
             <span className="font-mono text-sm text-black/40 w-20">Call</span>
-            <span className="font-mono font-semibold">[YOUR PHONE]</span>
-          </div>
-          <div className="gloss rounded-xl px-5 py-4 flex items-center gap-4">
+            <span className="font-mono font-semibold">+254 745 435 732</span>
+          </a>
+          <a href="https://wa.me/254745435732" target="_blank" rel="noopener noreferrer" className="gloss rounded-xl px-5 py-4 flex items-center gap-4 hover:ring-1 hover:ring-black/15 transition-shadow">
             <span className="font-mono text-sm text-black/40 w-20">WhatsApp</span>
-            <span className="font-mono font-semibold">[YOUR WHATSAPP]</span>
-          </div>
-          <div className="gloss rounded-xl px-5 py-4 flex items-center gap-4">
+            <span className="font-mono font-semibold">+254 745 435 732</span>
+          </a>
+          <a href="mailto:info@telemetrynetworks.net" className="gloss rounded-xl px-5 py-4 flex items-center gap-4 hover:ring-1 hover:ring-black/15 transition-shadow">
             <span className="font-mono text-sm text-black/40 w-20">Email</span>
-            <span className="font-mono font-semibold">[YOUR EMAIL]</span>
-          </div>
+            <span className="font-mono font-semibold">info@telemetrynetworks.net</span>
+          </a>
         </div>
       </div>
       <div className="gloss rounded-2xl p-8">
