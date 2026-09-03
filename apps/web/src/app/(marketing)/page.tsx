@@ -16,7 +16,7 @@ export default function HomePage() {
         <div className="flex flex-col gap-6">
           <Reveal delay={0}>
             <div className="font-mono text-sm text-[var(--accent)] font-semibold tracking-wider">
-              FOR MANUFACTURING FACTORIES
+              A MANUFACTURING EXECUTION SYSTEM
             </div>
           </Reveal>
           <Reveal delay={0.1}>
