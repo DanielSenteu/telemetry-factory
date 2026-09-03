@@ -1,3 +1,5 @@
+import { DemoForm } from "@/components/marketing/demo-form";
+
 export default function ContactPage() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-20 grid md:grid-cols-2 gap-14">
@@ -25,27 +27,8 @@ export default function ContactPage() {
           </a>
         </div>
       </div>
-      <div className="gloss rounded-2xl p-8">
-        <div className="flex flex-col gap-5">
-          {[
-            ["Your name", "text"],
-            ["Company", "text"],
-            ["Phone", "tel"],
-          ].map(([label, type]) => (
-            <label key={label} className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-black/70">{label}</span>
-              <input type={type} className="h-11 rounded-lg border border-black/10 px-3.5 text-sm outline-none focus:border-black/30" />
-            </label>
-          ))}
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-black/70">What do you manufacture?</span>
-            <textarea rows={3} className="rounded-lg border border-black/10 px-3.5 py-2.5 text-sm outline-none focus:border-black/30" placeholder="e.g. medical containers, caps, packaging, household goods…" />
-          </label>
-          <button className="h-12 rounded-lg bg-[var(--ink)] text-white font-medium hover:bg-black transition-colors">
-            Book my demo
-          </button>
-          <p className="text-xs text-black/40 text-center">We reply within one working day.</p>
-        </div>
+      <div className="gloss rounded-2xl p-8 relative">
+        <DemoForm />
       </div>
     </section>
   );
