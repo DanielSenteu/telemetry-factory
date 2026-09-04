@@ -7,7 +7,7 @@ export type StockedProduct = {
   id: number;
   name: string;
   sku: string | null;
-  kind: "raw_material" | "finished_good" | "consumable";
+  kind: "raw_material" | "finished_good" | "consumable" | "component";
   unit_of_measure: string;
   sale_price: number | null;
   reorder_point: number | null;

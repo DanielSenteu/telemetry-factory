@@ -118,6 +118,7 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
 
   const raw = (rows || []).filter((r) => r.kind === "raw_material" || r.kind === "consumable");
   const finished = (rows || []).filter((r) => r.kind === "finished_good");
+  const components = (rows || []).filter((r) => r.kind === "component");
 
   return (
     <div className="flex flex-col gap-5">
@@ -136,10 +137,13 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
       )}
 
       {rows !== null && rows.length > 0 && (
-        <div className="grid grid-cols-3 gap-4">
+        <div className={`grid gap-4 ${components.length > 0 ? "grid-cols-2 md:grid-cols-4" : "grid-cols-3"}`}>
           {[
             { label: "Total stock value", value: fmtKsh(rows.reduce((a, r) => a + Number(r.stock_value || 0), 0)) },
             { label: "Raw materials", value: fmtKsh(raw.reduce((a, r) => a + Number(r.stock_value || 0), 0)) },
+            ...(components.length > 0
+              ? [{ label: "Components (made here)", value: fmtKsh(components.reduce((a, r) => a + Number(r.stock_value || 0), 0)) }]
+              : []),
             { label: "Finished goods", value: fmtKsh(finished.reduce((a, r) => a + Number(r.stock_value || 0), 0)) },
           ].map((t) => (
             <div key={t.label} className="gloss rounded-2xl px-5 py-4">
@@ -167,6 +171,7 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
       ) : (
         <>
           <Section title="Finished goods" rows={finished} onManage={setManaging} />
+          <Section title="Components — made here, not sold" rows={components} onManage={setManaging} />
           <Section title="Raw materials" rows={raw} onManage={setManaging} />
         </>
       )}
