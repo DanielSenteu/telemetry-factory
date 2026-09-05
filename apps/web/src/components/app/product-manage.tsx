@@ -8,6 +8,7 @@ import {
   archiveProduct,
   deleteProduct,
   countMovements,
+  getProductLinks,
   adjustStockManual,
   type StockedProduct,
 } from "@/lib/services/inventory";
@@ -47,7 +48,7 @@ export function ProductManageDialog({
       </div>
       {tab === "stock" && <AdjustStock orgId={orgId} product={product} onDone={onDone} onClose={onClose} />}
       {tab === "edit" && <EditFields product={product} onDone={onDone} onClose={onClose} />}
-      {tab === "remove" && <Remove product={product} onDone={onDone} onClose={onClose} />}
+      {tab === "remove" && <Remove orgId={orgId} product={product} onDone={onDone} onClose={onClose} />}
     </Modal>
   );
 }
@@ -177,22 +178,28 @@ function EditFields({ product, onDone, onClose }: { product: StockedProduct; onD
   );
 }
 
-function Remove({ product, onDone, onClose }: { product: StockedProduct; onDone: () => void; onClose: () => void }) {
+function Remove({ orgId, product, onDone, onClose }: { orgId: number; product: StockedProduct; onDone: () => void; onClose: () => void }) {
   const [moves, setMoves] = useState<number | null>(null);
+  const [links, setLinks] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let gone = false;
     countMovements(product.id).then((n) => !gone && setMoves(n)).catch(() => !gone && setMoves(0));
+    getProductLinks(orgId, product.id).then((l) => !gone && setLinks(l)).catch(() => !gone && setLinks([]));
     return () => { gone = true; };
-  }, [product.id]);
+  }, [orgId, product.id]);
+
+  const hasHistory = (moves ?? 0) > 0;
+  const hasLinks = (links?.length ?? 0) > 0;
+  const canHardDelete = !hasHistory && !hasLinks;
 
   const run = async () => {
     setBusy(true);
     setError(null);
     try {
-      if (moves === 0) await deleteProduct(product.id);
+      if (canHardDelete) await deleteProduct(product.id);
       else await archiveProduct(product.id);
       onDone();
       onClose();
@@ -203,29 +210,45 @@ function Remove({ product, onDone, onClose }: { product: StockedProduct; onDone:
     }
   };
 
-  if (moves === null) return <div className="h-24 rounded-lg bg-black/5 animate-pulse" />;
+  if (moves === null || links === null) return <div className="h-24 rounded-lg bg-black/5 animate-pulse" />;
 
-  const hasHistory = moves > 0;
   return (
     <div className="flex flex-col gap-4">
-      {hasHistory ? (
+      {hasLinks && (
+        <div className="rounded-xl bg-amber-50 border border-amber-200 px-4 py-3 text-sm text-amber-800 flex flex-col gap-1.5">
+          <span className="font-semibold">Other things still point at this product:</span>
+          <ul className="list-disc pl-5 flex flex-col gap-0.5">
+            {links!.map((l, i) => (
+              <li key={i}>{l}</li>
+            ))}
+          </ul>
+          <span>
+            So it can&apos;t be deleted outright — it will be <span className="font-semibold">archived</span> instead:
+            hidden from your lists, with everything that references it staying consistent. To truly delete it,
+            remove those links first.
+          </span>
+        </div>
+      )}
+      {!hasLinks && hasHistory && (
         <p className="text-sm text-black/60">
           This material has <span className="font-semibold">{moves} movement{moves === 1 ? "" : "s"}</span> of history.
           It will be <span className="font-semibold">archived</span> — hidden from your lists, but its ledger is kept so past
           numbers stay correct. It never really disappears.
         </p>
-      ) : (
+      )}
+      {canHardDelete && (
         <p className="text-sm text-black/60">
-          This material has no stock history, so it will be <span className="font-semibold">deleted permanently</span>. Nothing is lost.
+          This material has no stock history and nothing points at it, so it will be{" "}
+          <span className="font-semibold">deleted permanently</span>. Nothing is lost.
         </p>
       )}
       {error && <p className="text-sm text-red-600">{error}</p>}
       <button
         onClick={run}
         disabled={busy}
-        className={`h-12 rounded-lg font-medium text-white transition-colors disabled:opacity-60 ${hasHistory ? "bg-black/85 hover:bg-black" : "bg-red-500 hover:bg-red-600"}`}
+        className={`h-12 rounded-lg font-medium text-white transition-colors disabled:opacity-60 ${canHardDelete ? "bg-red-500 hover:bg-red-600" : "bg-black/85 hover:bg-black"}`}
       >
-        {busy ? "…" : hasHistory ? "Archive material" : "Delete permanently"}
+        {busy ? "…" : canHardDelete ? "Delete permanently" : "Archive material"}
       </button>
     </div>
   );

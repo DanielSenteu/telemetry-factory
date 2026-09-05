@@ -147,10 +147,64 @@ export async function countMovements(productId: number): Promise<number> {
   return count ?? 0;
 }
 
-/** Hard delete — ONLY safe when the product has no ledger history (FK cascades). */
+/** Everything still pointing at this product, in plain words. A product with
+ *  links can't be hard-deleted — the database (rightly) refuses to leave a
+ *  machine mapping or a recipe pointing at a ghost. */
+export async function getProductLinks(orgId: number, productId: number): Promise<string[]> {
+  const [maps, ingredients, actions] = await Promise.all([
+    supabase
+      .from("machine_product_map")
+      .select("craft_id, machines(name)")
+      .eq("org_id", orgId)
+      .eq("product_id", productId),
+    supabase
+      .from("bom_lines")
+      .select("id, boms!inner(products(name))")
+      .eq("org_id", orgId)
+      .eq("component_product_id", productId),
+    supabase
+      .from("machine_count_actions")
+      .select("machines(name)")
+      .eq("org_id", orgId)
+      .eq("product_id", productId),
+  ]);
+  if (maps.error) throw new Error(maps.error.message);
+  if (ingredients.error) throw new Error(ingredients.error.message);
+  if (actions.error) throw new Error(actions.error.message);
+
+  const name = (v: unknown): string | null => {
+    const o = v as { name?: string } | { name?: string }[] | null;
+    return (Array.isArray(o) ? o[0]?.name : o?.name) ?? null;
+  };
+
+  const links: string[] = [];
+  for (const m of maps.data || []) {
+    links.push(`Linked to machine job ${m.craft_id} on ${name(m.machines) ?? "a machine"}`);
+  }
+  for (const l of ingredients.data || []) {
+    const bom = l.boms as unknown as { products?: unknown } | { products?: unknown }[] | null;
+    const parent = name(Array.isArray(bom) ? bom[0]?.products : bom?.products);
+    links.push(`An ingredient in the recipe of ${parent ?? "another product"}`);
+  }
+  for (const a of actions.data || []) {
+    links.push(`Used by the per-count rule on ${name(a.machines) ?? "a machine"}`);
+  }
+  return links;
+}
+
+/** Hard delete — ONLY safe when the product has no ledger history and no
+ *  links (check getProductLinks first). The product's OWN recipe is its own
+ *  data, so it goes with it. */
 export async function deleteProduct(id: number) {
+  const { error: bomErr } = await supabase.from("boms").delete().eq("product_id", id);
+  if (bomErr) throw new Error(bomErr.message);
   const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) {
+    if (error.message.includes("violates foreign key")) {
+      throw new Error("Something still points at this product, so it can't be deleted — archive it instead.");
+    }
+    throw new Error(error.message);
+  }
 }
 
 /** Archive — hides from lists but keeps the product and its ledger intact. */
