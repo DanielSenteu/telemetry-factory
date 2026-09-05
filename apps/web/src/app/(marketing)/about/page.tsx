@@ -39,7 +39,7 @@ export default function AboutPage() {
           <ul className="mt-6 flex flex-col gap-4">
             {[
               ["Now", "Live floor, materials and stock, recipes and costing, sales mirroring, production planning."],
-              ["Next", "More machine brands and controllers. Point-of-sale integration so shop sales deduct stock the same way invoices do."],
+              ["Next", "Two-way ERP sync: production output and stock posted straight back into Zoho, Odoo or your bookkeeping system. More machine brands and controllers, and point-of-sale integration so shop sales deduct stock the same way invoices do."],
               ["Then", "Multi-site factories on one screen, and the patterns three years of your own data can teach: when a machine drifts, when a material runs short, before it happens."],
             ].map(([k, v]) => (
               <li key={k} className="flex gap-5">

@@ -43,7 +43,7 @@ const SECTIONS = [
     kicker: "03 · WHAT TO MAKE NEXT",
     title: "The morning decision, answered.",
     body: [
-      "Industrial-Sync links directly to your sales history, pulling a read-only stream from the invoicing software you already use, and translates years of client data into a live demand rate. Balanced against your live warehouse stock, the system calculates your exact weeks-of-cover. You see instantly which products are safe and which ones run out this week.",
+      "Industrial-Sync links directly to your sales history, pulling a live stream from the invoicing software you already use, and translates years of client data into a live demand rate. Balanced against your live warehouse stock, the system calculates your exact weeks-of-cover. You see instantly which products are safe and which ones run out this week.",
       "This completely kills capital overcommitment and inventory imbalances. The system handles the heavy math managers usually stress over on paper: it calculates, from production order, that a run of 12,000 surgical containers requires exactly 5.4 machine hours and 95 kg of polypropylene. If the polymer isn't in the warehouse, the system flags the shortfall before the heating bands are even turned on. Your most critical bottlenecks are never overshadowed.",
     ],
     facts: [
@@ -72,16 +72,16 @@ const SECTIONS = [
   {
     id: "integrations",
     kicker: "05 · WORKS WITH WHAT YOU HAVE",
-    title: "Keep your invoicing. We read it.",
+    title: "Keep your invoicing. We sync with it, both ways.",
     body: [
-      "You don't need to change how your sales team operates or throw out the invoicing software you trust. Industrial-Sync mirrors your active platforms, like Zoho Books or Oracle, in a secure, read-only, one-direction stream. We never write data back or alter your accounts. You link your invoice items to your physical product recipes once, and your entire operational history resolves retroactively.",
+      "You don't need to change how your sales team operates or throw out the invoicing software you trust. Industrial-Sync connects to your active platforms, like Zoho Books, Odoo or Oracle, over one secure encrypted stream, both ways: sales records flow in to drive stock and demand, and production output and stock levels post straight back, so your business software and your floor always agree. You link your invoice items to your physical product recipes once, and your entire operational history resolves retroactively.",
       "In our very first deployment, we mirrored 24,000 legacy invoices. Three years of fragmented sales history were instantly transformed into a live, clear demand picture. Your departments are unified overnight, and the owner knows the exact stock-out balances and material margins in real time.",
     ],
     facts: [
-      ["Encrypted Read-Only Sync", "We pull sales records securely without ever touching or modifying your financial data."],
+      ["Encrypted Two-Way Sync", "Sales records flow in and production data posts back, over one secure and fully audited connection."],
       ["Retroactive Matching", "Link a product item once, and the system automatically charts its entire historical demand."],
       ["Automated Sales Deductions", "Shipped invoices trigger automatic finished goods deductions from your inventory."],
-      ["Native ERP & Books Sync", "Built to plug straight into Zoho Books, Oracle, or any modern bookkeeping system with an open API from day one."],
+      ["Native ERP & Books Sync", "Built to plug straight into Zoho Books, Odoo, Oracle, or any modern bookkeeping system with an open API from day one."],
     ],
   },
   {
