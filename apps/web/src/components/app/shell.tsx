@@ -11,6 +11,7 @@ const TABS = [
   { href: "/app/materials", label: "Materials" },
   { href: "/app/production", label: "Production" },
   { href: "/app/sales", label: "Sales" },
+  { href: "/app/variance", label: "Variance Reports" },
 ];
 
 export function AppShell({

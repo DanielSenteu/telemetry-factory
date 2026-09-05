@@ -31,17 +31,21 @@ export function ConfirmOutputDialog({
   onClose: () => void;
   onDone: () => void;
 }) {
+  const [step, setStep] = useState<"check" | "adjust">("check");
   const [good, setGood] = useState(String(suggestedGood));
   const [scrap, setScrap] = useState(String(suggestedScrap));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async () => {
+  // Both numbers are recorded: what the system counted and what the floor
+  // said. The floor's number wins in stock; the pair becomes the day's
+  // variance line for this machine + product.
+  const submit = async (goodQty: number, scrapQty: number) => {
     if (!productId) return;
     setBusy(true);
     setError(null);
     try {
-      await confirmMachineOutput(orgId, machine.machine_id, productId, Number(good) || 0, Number(scrap) || 0);
+      await confirmMachineOutput(orgId, machine.machine_id, productId, goodQty, scrapQty, suggestedGood);
       onDone();
       onClose();
     } catch (e) {
@@ -59,14 +63,40 @@ export function ConfirmOutputDialog({
           <span className="mx-1 font-mono text-[11px] font-semibold text-amber-700 bg-amber-100 rounded px-1.5 py-0.5">unmapped</span>
           badge on the card), then confirm.
         </p>
+      ) : step === "check" ? (
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-black/55">We counted today:</p>
+          <div className="text-center py-2">
+            <span className="font-mono text-5xl font-semibold tabular-nums">{suggestedGood.toLocaleString()}</span>
+            <span className="ml-2 text-sm text-black/45">good parts</span>
+            {suggestedScrap > 0 && (
+              <div className="mt-1 text-sm text-black/45 font-mono">{suggestedScrap.toLocaleString()} scrap</div>
+            )}
+          </div>
+          <p className="text-sm font-medium text-black/70 text-center">Is this correct?</p>
+          {error && <p className="text-sm text-red-600">{error}</p>}
+          <button className={primaryBtn} disabled={busy} onClick={() => submit(suggestedGood, suggestedScrap)}>
+            {busy ? "Confirming…" : "Yes, correct — confirm"}
+          </button>
+          <button
+            onClick={() => setStep("adjust")}
+            disabled={busy}
+            className="h-12 rounded-lg border border-black/15 font-medium hover:bg-black/[0.04] transition-colors"
+          >
+            No — enter the actual count
+          </button>
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
+          <button onClick={() => setStep("check")} className="text-sm text-black/50 hover:text-black text-left">
+            ← We counted {suggestedGood.toLocaleString()}
+          </button>
           <p className="text-sm text-black/55">
-            Counted by the machine today — adjust if reality differed, then confirm. This adds the
-            finished goods to stock and deducts material by the recipe.
+            Enter what actually happened — your number goes into stock, and the difference is
+            recorded on today&apos;s variance report.
           </p>
           <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-black/70">Good parts</span>
+            <span className="text-sm font-medium text-black/70">Good parts (actual)</span>
             <input type="number" inputMode="numeric" className={field + " font-mono"} value={good} onChange={(e) => setGood(e.target.value)} />
           </label>
           <label className="flex flex-col gap-1.5">
@@ -74,7 +104,7 @@ export function ConfirmOutputDialog({
             <input type="number" inputMode="numeric" className={field + " font-mono"} value={scrap} onChange={(e) => setScrap(e.target.value)} />
           </label>
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button className={primaryBtn} disabled={busy} onClick={submit}>
+          <button className={primaryBtn} disabled={busy} onClick={() => submit(Number(good) || 0, Number(scrap) || 0)}>
             {busy ? "Confirming…" : `Confirm ${Number(good).toLocaleString()} good parts`}
           </button>
           <p className="text-xs text-black/40 text-center">

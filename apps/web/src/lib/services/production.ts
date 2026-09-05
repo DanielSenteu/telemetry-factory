@@ -137,6 +137,7 @@ export async function confirmMachineOutput(
   productId: number,
   goodQty: number,
   scrapQty: number,
+  systemQty: number | null = null,
 ) {
   const { data, error } = await supabase.rpc("confirm_machine_output", {
     p_org_id: orgId,
@@ -144,6 +145,7 @@ export async function confirmMachineOutput(
     p_product_id: productId,
     p_good_qty: goodQty,
     p_scrap_qty: scrapQty,
+    p_system_qty: systemQty,
   });
   if (error) throw new Error(error.message);
   return data as number;
@@ -246,4 +248,31 @@ export async function getProductStage(productId: number): Promise<number | null>
     .single();
   if (error) throw new Error(error.message);
   return data?.made_at_stage_id ?? null;
+}
+
+
+// ── Variance reports: the floor grades the system's counting ─
+
+export type VarianceLine = {
+  day: string;
+  machine_id: number;
+  machine_name: string;
+  product_id: number | null;
+  product_name: string;
+  source: "confirm" | "post";
+  system_qty: number;
+  floor_qty: number;
+  diff: number;
+  error_pct: number;
+  accuracy_pct: number;
+};
+
+export async function getVarianceReport(orgId: number, from: string, to: string): Promise<VarianceLine[]> {
+  const { data, error } = await supabase.rpc("variance_report", {
+    p_org_id: orgId,
+    p_from: from,
+    p_to: to,
+  });
+  if (error) throw new Error(error.message);
+  return data || [];
 }

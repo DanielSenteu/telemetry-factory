@@ -194,12 +194,18 @@ export async function clearCountAction(orgId: number, machineId: number) {
 /** Post one day's counts. With productId ("what was wrapped today?") the
  *  product's PACKAGING recipe lines bill; without it, the machine's fixed
  *  fallback action does. Idempotent per machine per day. */
-export async function postCountAction(orgId: number, machineId: number, day?: string, productId?: number) {
+export async function postCountAction(
+  orgId: number,
+  machineId: number,
+  day?: string,
+  productId?: number,
+  countsOverride?: number
+) {
   const { error } = await supabase.rpc("post_count_action", {
     p_org_id: orgId,
     p_machine_id: machineId,
     p_day: day ?? null,
-    p_counts_override: null,
+    p_counts_override: countsOverride ?? null,
     p_product_id: productId ?? null,
   });
   if (error) throw new Error(error.message);

@@ -83,6 +83,10 @@ function CountActionSection({
   const [qtyPer, setQtyPer] = useState("");
   const [busy, setBusy] = useState<null | "save" | "post" | "clear">(null);
   const [posted, setPosted] = useState(false);
+  // The "is this correct?" step: the floor checks the system's count before
+  // posting; a correction is recorded on the day's variance report.
+  const [postStep, setPostStep] = useState<null | "check" | "adjust">(null);
+  const [actualCount, setActualCount] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -134,12 +138,13 @@ function CountActionSection({
     }
   };
 
-  const post = async () => {
+  const post = async (actual?: number) => {
     setBusy("post");
     setError(null);
     try {
-      await postCountAction(orgId, machineId, undefined, wrapProductId ? Number(wrapProductId) : undefined);
+      await postCountAction(orgId, machineId, undefined, wrapProductId ? Number(wrapProductId) : undefined, actual);
       setPosted(true);
+      setPostStep(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -199,17 +204,62 @@ function CountActionSection({
             </button>
           )}
 
-          <button
-            onClick={post}
-            disabled={busy === "post" || !canPost}
-            className={primaryBtn + " h-11"}
-          >
-            {posted
-              ? "Posted — stock updated"
-              : busy === "post"
-                ? "Posting…"
+          {postStep === null && (
+            <button
+              onClick={() => setPostStep("check")}
+              disabled={busy === "post" || posted || !canPost}
+              className={primaryBtn + " h-11"}
+            >
+              {posted
+                ? "Posted — stock updated"
                 : `Post today's usage (${todayCounts.toLocaleString()} ${countNoun})`}
-          </button>
+            </button>
+          )}
+          {postStep === "check" && !posted && (
+            <div className="rounded-xl border border-black/10 p-4 flex flex-col gap-3">
+              <p className="text-sm text-center">
+                We counted <span className="font-mono text-2xl font-semibold tabular-nums">{todayCounts.toLocaleString()}</span>{" "}
+                {countNoun} today. Is this correct?
+              </p>
+              <button onClick={() => post()} disabled={busy === "post"} className={primaryBtn + " h-11"}>
+                {busy === "post" ? "Posting…" : "Yes, correct — post"}
+              </button>
+              <button
+                onClick={() => { setPostStep("adjust"); setActualCount(String(todayCounts)); }}
+                disabled={busy === "post"}
+                className="h-11 rounded-lg border border-black/15 text-sm font-medium hover:bg-black/[0.04] transition-colors"
+              >
+                No — enter the actual count
+              </button>
+            </div>
+          )}
+          {postStep === "adjust" && !posted && (
+            <div className="rounded-xl border border-black/10 p-4 flex flex-col gap-3">
+              <button onClick={() => setPostStep("check")} className="text-sm text-black/50 hover:text-black text-left">
+                ← We counted {todayCounts.toLocaleString()}
+              </button>
+              <label className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium text-black/70">Actual {countNoun} today</span>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  className={field + " font-mono"}
+                  value={actualCount}
+                  onChange={(e) => setActualCount(e.target.value)}
+                />
+              </label>
+              <button
+                onClick={() => post(Number(actualCount) || 0)}
+                disabled={busy === "post" || !Number(actualCount)}
+                className={primaryBtn + " h-11"}
+              >
+                {busy === "post" ? "Posting…" : `Post ${Number(actualCount || 0).toLocaleString()} ${countNoun}`}
+              </button>
+              <p className="text-xs text-black/45">
+                Your number goes into stock; the difference lands on today&apos;s variance report.
+              </p>
+            </div>
+          )}
           <p className="text-xs text-black/45">
             Posts once per day as a single stock movement — posting again the same day does nothing.
           </p>
