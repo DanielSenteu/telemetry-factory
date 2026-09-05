@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Modal, field, primaryBtn } from "@/components/app/modal";
 import { listProducts, createProduct, type StockedProduct } from "@/lib/services/inventory";
+import { upsertBOMLine } from "@/lib/services/production";
 import { ProductManageDialog } from "@/components/app/product-manage";
 import { UnitSelect } from "@/components/app/unit-select";
 
@@ -176,7 +177,9 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
         </>
       )}
 
-      {adding && <AddProductDialog orgId={orgId} onClose={() => setAdding(false)} onDone={load} />}
+      {adding && (
+        <AddProductDialog orgId={orgId} madeHere={components} onClose={() => setAdding(false)} onDone={load} />
+      )}
       {managing && (
         <ProductManageDialog orgId={orgId} product={managing} onClose={() => setManaging(null)} onDone={load} />
       )}
@@ -184,11 +187,24 @@ export function MaterialsStock({ orgId }: { orgId: number }) {
   );
 }
 
-function AddProductDialog({ orgId, onClose, onDone }: { orgId: number; onClose: () => void; onDone: () => void }) {
+function AddProductDialog({
+  orgId,
+  madeHere,
+  onClose,
+  onDone,
+}: {
+  orgId: number;
+  madeHere: StockedProduct[];
+  onClose: () => void;
+  onDone: () => void;
+}) {
   const [kind, setKind] = useState<(typeof KINDS)[number]["key"] | null>(null);
   const [name, setName] = useState("");
   const [uom, setUom] = useState("");
   const [salePrice, setSalePrice] = useState("");
+  // Sealed, printed, assembled, packed — whatever the floor does. Planting
+  // this link is optional; the rest of the recipe is written in Recipes.
+  const [processedFrom, setProcessedFrom] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -202,12 +218,15 @@ function AddProductDialog({ orgId, onClose, onDone }: { orgId: number; onClose: 
     setBusy(true);
     setError(null);
     try {
-      await createProduct(orgId, {
+      const created = await createProduct(orgId, {
         name: name.trim(),
         kind,
         unit_of_measure: uom || "each",
         sale_price: kind === "finished_good" && salePrice ? Number(salePrice) : null,
       });
+      if (kind === "finished_good" && processedFrom) {
+        await upsertBOMLine(orgId, created.id, Number(processedFrom), 1, "each", 1, "packaging");
+      }
       onDone();
       onClose();
     } catch (e) {
@@ -241,6 +260,21 @@ function AddProductDialog({ orgId, onClose, onDone }: { orgId: number; onClose: 
             <span className="text-sm font-medium text-black/70">Counted in</span>
             <UnitSelect value={uom} onChange={setUom} />
           </label>
+          {kind === "finished_good" && madeHere.length > 0 && (
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-black/70">Processed from something you make here? (optional)</span>
+              <select className={field} value={processedFrom} onChange={(e) => setProcessedFrom(e.target.value)}>
+                <option value="">No — made directly</option>
+                {madeHere.map((c) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
+              <span className="text-xs text-black/45">
+                Sealed, printed, assembled, packed — whatever your floor does. This links the two; add the rest of
+                its recipe in Recipes.
+              </span>
+            </label>
+          )}
           {kind === "finished_good" && (
             <label className="flex flex-col gap-1.5">
               <span className="text-sm font-medium text-black/70">Sale price (KES, optional)</span>

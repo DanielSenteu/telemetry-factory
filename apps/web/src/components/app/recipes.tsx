@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { field } from "@/components/app/modal";
 import { convert, familyMembers, canonicalUnit } from "@/lib/services/units";
+import { RecipeTree } from "@/components/app/recipe-tree";
 import {
   listFinishedGoods,
   listRawMaterials,
@@ -10,8 +11,15 @@ import {
   upsertBOMLine,
   deleteBOMLine,
   updateBOMShotParams,
+  getRecipeTree,
+  listStages,
+  addStage,
+  setProductStage,
+  getProductStage,
   type Bom,
   type Product,
+  type TreeNode,
+  type ProcessStage,
 } from "@/lib/services/production";
 
 // Recipes: what one unit is made of. This is what makes production deduct
@@ -24,6 +32,13 @@ export function Recipes({ orgId }: { orgId: number }) {
   const [bom, setBom] = useState<Bom | null>(null);
   const [loadingBom, setLoadingBom] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // The production tree: rooted at the picked product; clicking a node edits it.
+  const [rootId, setRootId] = useState<number | null>(null);
+  const [tree, setTree] = useState<TreeNode[] | null>(null);
+  // Stage vocabulary (per-factory step names) + the selected product's stage.
+  const [stages, setStages] = useState<ProcessStage[]>([]);
+  const [newStageName, setNewStageName] = useState("");
+  const [madeAt, setMadeAt] = useState<string>("");
 
   // add-line form
   const [componentId, setComponentId] = useState("");
@@ -41,17 +56,38 @@ export function Recipes({ orgId }: { orgId: number }) {
 
   useEffect(() => {
     let gone = false;
-    Promise.all([listFinishedGoods(orgId), listRawMaterials(orgId)])
-      .then(([fg, rm]) => {
+    Promise.all([listFinishedGoods(orgId), listRawMaterials(orgId), listStages(orgId)])
+      .then(([fg, rm, st]) => {
         if (gone) return;
         setProducts(fg);
         setMaterials(rm);
+        setStages(st);
       })
       .catch((e) => !gone && setError(e.message));
     return () => {
       gone = true;
     };
   }, [orgId]);
+
+  const loadTree = useCallback(
+    async (rid: number) => {
+      try {
+        setTree(await getRecipeTree(orgId, rid));
+      } catch (e) {
+        setError(e instanceof Error ? e.message : String(e));
+      }
+    },
+    [orgId],
+  );
+
+  const loadStageFor = useCallback(async (pid: number) => {
+    try {
+      const s = await getProductStage(pid);
+      setMadeAt(s != null ? String(s) : "");
+    } catch {
+      setMadeAt("");
+    }
+  }, []);
 
   const loadBom = useCallback(
     async (pid: number) => {
@@ -72,12 +108,33 @@ export function Recipes({ orgId }: { orgId: number }) {
     [orgId],
   );
 
+  // Picking from the dropdown roots the tree there and edits that product.
   const pick = (pid: number) => {
+    setRootId(pid);
+    setProductId(pid);
+    setBom(null);
+    setTree(null);
+    setComponentId("");
+    setQty("");
+    loadBom(pid);
+    loadTree(pid);
+    loadStageFor(pid);
+  };
+
+  // Clicking a tree node keeps the tree rooted but edits that node below.
+  const selectNode = (pid: number) => {
     setProductId(pid);
     setBom(null);
     setComponentId("");
     setQty("");
     loadBom(pid);
+    loadStageFor(pid);
+  };
+
+  // Any edit refreshes both the editor and the tree it's part of.
+  const refreshAfterEdit = async (pid: number) => {
+    await loadBom(pid);
+    if (rootId != null) await loadTree(rootId);
   };
 
   const addLine = async () => {
@@ -95,7 +152,7 @@ export function Recipes({ orgId }: { orgId: number }) {
       setEntryUnit("");
       setPerN("");
       setStage("moulding");
-      await loadBom(productId);
+      await refreshAfterEdit(productId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -108,7 +165,7 @@ export function Recipes({ orgId }: { orgId: number }) {
     setError(null);
     try {
       await deleteBOMLine(lineId);
-      await loadBom(productId);
+      await refreshAfterEdit(productId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     }
@@ -126,7 +183,7 @@ export function Recipes({ orgId }: { orgId: number }) {
         runnerG ? Number(runnerG) : null,
         runnerMat ? Number(runnerMat) : null,
       );
-      await loadBom(productId);
+      await refreshAfterEdit(productId);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -146,20 +203,80 @@ export function Recipes({ orgId }: { orgId: number }) {
         </p>
       </div>
 
+      {/* The factory's own step names */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="text-sm font-medium text-black/70">Steps:</span>
+        {stages.map((s) => (
+          <span key={s.id} className="rounded-lg bg-black/[0.05] px-3 py-1.5 text-sm font-medium">{s.name}</span>
+        ))}
+        <input
+          className="h-9 w-36 rounded-lg border border-black/10 px-3 text-sm outline-none focus:border-black/30"
+          placeholder="Add a step…"
+          value={newStageName}
+          onChange={(e) => setNewStageName(e.target.value)}
+          onKeyDown={async (e) => {
+            if (e.key === "Enter" && newStageName.trim()) {
+              try {
+                await addStage(orgId, newStageName);
+                setNewStageName("");
+                setStages(await listStages(orgId));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+              }
+            }
+          }}
+        />
+      </div>
+
       <label className="flex flex-col gap-1.5 max-w-sm">
         <span className="text-sm font-medium text-black/70">Product</span>
-        <select className={field} value={productId ?? ""} onChange={(e) => e.target.value && pick(Number(e.target.value))}>
+        <select className={field} value={rootId ?? ""} onChange={(e) => e.target.value && pick(Number(e.target.value))}>
           <option value="">Choose a product…</option>
           {products.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
+            <option key={p.id} value={p.id}>{p.name}{p.kind === "component" ? " (component)" : ""}</option>
           ))}
         </select>
       </label>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
+      {/* The production story, all levels at once */}
+      {rootId && tree && tree.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h2 className="font-display text-lg font-bold">How it&apos;s made</h2>
+          <RecipeTree nodes={tree} selectedId={productId} onSelect={selectNode} />
+          <p className="text-xs text-black/45">
+            Tap any step to edit it below. Amber marks what still needs filling in.
+          </p>
+        </div>
+      )}
+
       {productId && (
         <div className="flex flex-col gap-4">
+          {/* Which of the factory's steps makes the selected product */}
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-sm font-medium text-black/70">
+              {selected?.name ?? "This product"} is made at:
+            </span>
+            <select
+              className="h-10 rounded-lg border border-black/10 px-3 text-sm outline-none focus:border-black/30"
+              value={madeAt}
+              onChange={async (e) => {
+                setMadeAt(e.target.value);
+                try {
+                  await setProductStage(productId, e.target.value ? Number(e.target.value) : null);
+                  if (rootId != null) await loadTree(rootId);
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : String(err));
+                }
+              }}
+            >
+              <option value="">Choose a step…</option>
+              {stages.map((s) => (
+                <option key={s.id} value={s.id}>{s.name}</option>
+              ))}
+            </select>
+          </div>
           {/* Ingredients */}
           <div className="gloss rounded-2xl p-6">
             <h2 className="font-display text-lg font-bold">Per unit of {selected?.name}</h2>

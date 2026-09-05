@@ -169,3 +169,81 @@ export async function postManualStockAdjustment(
   if (error) throw new Error(error.message);
   return data as number;
 }
+
+// ── The production tree ───────────────────────────────────
+
+export type TreeMaterialLine = {
+  name: string;
+  qty: number;
+  per_units: number;
+  uom: string;
+  stage: string;
+};
+
+export type TreeNode = {
+  product_id: number;
+  parent_product_id: number | null;
+  depth: number;
+  link_qty: number | null;
+  link_per_units: number | null;
+  link_uom: string | null;
+  name: string;
+  kind: string;
+  unit_of_measure: string;
+  stage_name: string | null;
+  cavities: number | null;
+  runner_weight_g: number | null;
+  runner_material: string | null;
+  has_recipe: boolean;
+  material_lines: TreeMaterialLine[];
+};
+
+/** The whole production story under a product — every made-here level,
+ *  each node carrying its bought-in lines, mould setup and stage. */
+export async function getRecipeTree(orgId: number, productId: number): Promise<TreeNode[]> {
+  const { data, error } = await supabase.rpc("recipe_tree", {
+    p_org_id: orgId,
+    p_product_id: productId,
+  });
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+// ── Process stages: each factory's own step names ─────────
+
+export type ProcessStage = { id: number; name: string; sort_order: number };
+
+export async function listStages(orgId: number): Promise<ProcessStage[]> {
+  const { data, error } = await supabase
+    .from("process_stages")
+    .select("id, name, sort_order")
+    .eq("org_id", orgId)
+    .order("sort_order")
+    .order("id");
+  if (error) throw new Error(error.message);
+  return data || [];
+}
+
+export async function addStage(orgId: number, name: string) {
+  const { error } = await supabase.from("process_stages").insert({
+    org_id: orgId,
+    name: name.trim(),
+    sort_order: 99,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function setProductStage(productId: number, stageId: number | null) {
+  const { error } = await supabase.from("products").update({ made_at_stage_id: stageId }).eq("id", productId);
+  if (error) throw new Error(error.message);
+}
+
+export async function getProductStage(productId: number): Promise<number | null> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("made_at_stage_id")
+    .eq("id", productId)
+    .single();
+  if (error) throw new Error(error.message);
+  return data?.made_at_stage_id ?? null;
+}
