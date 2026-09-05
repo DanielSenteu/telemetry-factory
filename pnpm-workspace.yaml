@@ -1,3 +1,8 @@
 packages:
   - apps/*
   - packages/*
+
+# core-js (via jspdf) has an install script that is only a funding banner;
+# declared ignored so pnpm 10/11 does not fail the install (Vercel runs 11).
+ignoredBuiltDependencies:
+  - core-js
